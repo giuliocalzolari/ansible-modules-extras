@@ -185,7 +185,7 @@ def main():
           sts = {"access_key": rs["Credentials"]["AccessKeyId"], "secret_key":rs["Credentials"]["SecretAccessKey"]  ,"session_token":rs["Credentials"]["SessionToken"] }
 
           module.exit_json(changed=True, sts_creds=sts, sts_user=rs["AssumedRoleUser"]["AssumedRoleId"])
-        except botocore.exceptions.ClientError, e:
+        except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")
