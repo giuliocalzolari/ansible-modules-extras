@@ -20,7 +20,7 @@ module: sts_assume_role_saml
 short_description: Assume a role using AWS Security Token Service and obtain temporary credentials with saml 
 description:
     - Assume a role using AWS Security Token Service and obtain temporary credentials using saml authentication on adfs windows 2012
-version_added: "2.2"
+version_added: "2.6"
 author: Giulio Calzolari
 options:
   role_arn:
