@@ -20,7 +20,7 @@ module: sts_assume_role_local
 short_description: Assume a role using AWS Security Token Service and obtain temporary credentials re-use the credential if is still valid
 description:
     - Assume a role using AWS Security Token Service and obtain temporary credentials and re-use the credential if is still valid
-version_added: "2.0"
+version_added: "2.3"
 author: Giulio Calzolari
 options:
   role_arn:
