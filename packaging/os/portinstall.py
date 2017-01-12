@@ -19,6 +19,10 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: portinstall
@@ -48,13 +52,19 @@ author: "berenddeboer (@berenddeboer)"
 
 EXAMPLES = '''
 # Install package foo
-- portinstall: name=foo state=present
+- portinstall:
+    name: foo
+    state: present
 
 # Install package security/cyrus-sasl2-saslauthd
-- portinstall: name=security/cyrus-sasl2-saslauthd state=present
+- portinstall:
+    name: security/cyrus-sasl2-saslauthd
+    state: present
 
 # Remove packages foo and bar
-- portinstall: name=foo,bar state=absent
+- portinstall:
+    name: foo,bar
+    state: absent
 '''
 
 
@@ -203,4 +213,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()

@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'committer',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: efs_facts
@@ -37,17 +41,15 @@ options:
         default: None
     tags:
         description:
-            - |
-                List of tags of Amazon EFS. Should be defined as dictionary
+            - List of tags of Amazon EFS. Should be defined as dictionary
         required: false
         default: None
     targets:
         description:
-            - |
-                List of mounted targets. It should be a list of dictionaries, every dictionary should include next attributes:
+            - "List of mounted targets. It should be a list of dictionaries, every dictionary should include next attributes:
                     - SubnetId - Mandatory. The ID of the subnet to add the mount target in.
                     - IpAddress - Optional. A valid IPv4 address within the address range of the specified subnet.
-                    - SecurityGroups - Optional. List of security group IDs, of the form "sg-xxxxxxxx". These must be for the same VPC as subnet specified.
+                    - SecurityGroups - Optional. List of security group IDs, of the form 'sg-xxxxxxxx'. These must be for the same VPC as subnet specified."
         required: false
         default: None
 extends_documentation_fragment:

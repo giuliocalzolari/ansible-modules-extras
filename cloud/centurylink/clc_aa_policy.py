@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 module: clc_aa_policy
 short_description: Create or Delete Anti Affinity Policies at CenturyLink Cloud.
@@ -74,13 +78,14 @@ EXAMPLES = '''
   tasks:
     - name: Create an Anti Affinity Policy
       clc_aa_policy:
-        name: 'Hammer Time'
-        location: 'UK3'
+        name: Hammer Time
+        location: UK3
         state: present
       register: policy
 
     - name: debug
-      debug: var=policy
+      debug:
+        var: policy
 
 ---
 - name: Delete AA Policy
@@ -90,13 +95,14 @@ EXAMPLES = '''
   tasks:
     - name: Delete an Anti Affinity Policy
       clc_aa_policy:
-        name: 'Hammer Time'
-        location: 'UK3'
+        name: Hammer Time
+        location: UK3
         state: absent
       register: policy
 
     - name: debug
-      debug: var=policy
+      debug:
+        var: policy
 '''
 
 RETURN = '''
@@ -131,6 +137,8 @@ policy:
 
 __version__ = '${version}'
 
+import os
+
 from distutils.version import LooseVersion
 
 try:
@@ -152,6 +160,8 @@ except ImportError:
     clc_sdk = None
 else:
     CLC_FOUND = True
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 class ClcAntiAffinityPolicy:
@@ -267,7 +277,7 @@ class ClcAntiAffinityPolicy:
             return self.clc.v2.AntiAffinity.Create(
                 name=p['name'],
                 location=p['location'])
-        except CLCException, ex:
+        except CLCException as ex:
             self.module.fail_json(msg='Failed to create anti affinity policy : {0}. {1}'.format(
                 p['name'], ex.response_text
             ))
@@ -281,7 +291,7 @@ class ClcAntiAffinityPolicy:
         try:
             policy = self.policy_dict[p['name']]
             policy.Delete()
-        except CLCException, ex:
+        except CLCException as ex:
             self.module.fail_json(msg='Failed to delete anti affinity policy : {0}. {1}'.format(
                 p['name'], ex.response_text
             ))
@@ -346,6 +356,5 @@ def main():
     clc_aa_policy = ClcAntiAffinityPolicy(module)
     clc_aa_policy.process_request()
 
-from ansible.module_utils.basic import *  # pylint: disable=W0614
 if __name__ == '__main__':
     main()

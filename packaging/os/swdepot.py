@@ -21,6 +21,10 @@
 import re
 import pipes
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: swdepot
@@ -58,9 +62,19 @@ options:
 '''
 
 EXAMPLES = '''
-- swdepot: name=unzip-6.0 state=installed depot=repository:/path
-- swdepot: name=unzip state=latest depot=repository:/path
-- swdepot: name=unzip state=absent
+- swdepot:
+    name: unzip-6.0
+    state: installed
+    depot: 'repository:/path'
+
+- swdepot:
+    name: unzip
+    state: latest
+    depot: 'repository:/path'
+
+- swdepot:
+    name: unzip
+    state: absent
 '''
 
 def compare_package(version1, version2):
@@ -192,5 +206,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
-
+if __name__ == '__main__':
+    main()

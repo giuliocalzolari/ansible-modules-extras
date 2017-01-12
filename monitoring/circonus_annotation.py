@@ -17,9 +17,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-import requests
-import time
-import json
+
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -67,25 +68,34 @@ EXAMPLES = '''
 # Create a simple annotation event with a source, defaults to start and end time of now
 - circonus_annotation:
     api_key: XXXXXXXXXXXXXXXXX
-    title: 'App Config Change'
-    description: 'This is a detailed description of the config change'
-    category: 'This category groups like annotations'
+    title: App Config Change
+    description: This is a detailed description of the config change
+    category: This category groups like annotations
 # Create an annotation with a duration of 5 minutes and a default start time of now
 - circonus_annotation:
     api_key: XXXXXXXXXXXXXXXXX
-    title: 'App Config Change'
-    description: 'This is a detailed description of the config change'
-    category: 'This category groups like annotations'
+    title: App Config Change
+    description: This is a detailed description of the config change
+    category: This category groups like annotations
     duration: 300
 # Create an annotation with a start_time and end_time
 - circonus_annotation:
     api_key: XXXXXXXXXXXXXXXXX
-    title: 'App Config Change'
-    description: 'This is a detailed description of the config change'
-    category: 'This category groups like annotations'
+    title: App Config Change
+    description: This is a detailed description of the config change
+    category: This category groups like annotations
     start_time: 1395940006
     end_time: 1395954407
 '''
+import json
+import time
+
+import requests
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+
+
 def post_annotation(annotation, api_key):
     ''' Takes annotation dict and api_key string'''
     base_url = 'https://api.circonus.com/v2'
@@ -94,6 +104,7 @@ def post_annotation(annotation, api_key):
             headers=build_headers(api_key), data=json.dumps(annotation))
     resp.raise_for_status()
     return resp
+
 
 def create_annotation(module):
     ''' Takes ansible module object '''
@@ -116,12 +127,15 @@ def create_annotation(module):
     annotation['description'] = module.params['description']
     annotation['title'] = module.params['title']
     return annotation
+
+
 def build_headers(api_token):
     '''Takes api token, returns headers with it included.'''
     headers = {'X-Circonus-App-Name': 'ansible',
         'Host': 'api.circonus.com', 'X-Circonus-Auth-Token': api_token,
         'Accept': 'application/json'}
     return headers
+
 
 def main():
     '''Main function, dispatches logic'''
@@ -139,9 +153,11 @@ def main():
     annotation = create_annotation(module)
     try:
         resp = post_annotation(annotation, module.params['api_key'])
-    except requests.exceptions.RequestException, err_str:
+    except requests.exceptions.RequestException:
+        err_str = get_exception()
         module.fail_json(msg='Request Failed', reason=err_str)
     module.exit_json(changed=True, annotation=resp.json())
 
-from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

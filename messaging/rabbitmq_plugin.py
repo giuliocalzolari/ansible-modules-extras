@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: rabbitmq_plugin
@@ -56,7 +60,9 @@ options:
 
 EXAMPLES = '''
 # Enables the rabbitmq_management plugin
-- rabbitmq_plugin: names=rabbitmq_management state=enabled
+- rabbitmq_plugin:
+    names: rabbitmq_management
+    state: enabled
 '''
 
 import os
@@ -147,4 +153,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

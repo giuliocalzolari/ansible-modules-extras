@@ -17,6 +17,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: postgresql_lang
@@ -119,16 +123,32 @@ EXAMPLES = '''
 # Add language pltclu to database testdb if it doesn't exist and mark it as trusted:
 # Marks the language as trusted if it exists but isn't trusted yet
 # force_trust makes sure that the language will be marked as trusted
-- postgresql_lang db=testdb lang=pltclu state=present trust=yes force_trust=yes
+- postgresql_lang:
+    db: testdb
+    lang: pltclu
+    state: present
+    trust: yes
+    force_trust: yes
 
 # Remove language pltclu from database testdb:
-- postgresql_lang: db=testdb lang=pltclu state=absent
+- postgresql_lang:
+    db: testdb
+    lang: pltclu
+    state: absent
 
 # Remove language pltclu from database testdb and remove all dependencies:
-- postgresql_lang: db=testdb lang=pltclu state=absent cascade=yes
+- postgresql_lang:
+    db: testdb
+    lang: pltclu
+    state: absent
+    cascade: yes
 
 # Remove language c from database testdb but ignore errors if something prevents the removal:
-- postgresql_lang: db=testdb lang=pltclu state=absent fail_on_drop=no
+- postgresql_lang:
+    db: testdb
+    lang: pltclu
+    state: absent
+    fail_on_drop: no
 '''
 
 try:
@@ -184,7 +204,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             login_user=dict(default="postgres"),
-            login_password=dict(default=""),
+            login_password=dict(default="", no_log=True),
             login_host=dict(default=""),
             db=dict(required=True),
             port=dict(default='5432'),
@@ -222,7 +242,8 @@ def main():
     try:
         db_connection = psycopg2.connect(**kw)
         cursor = db_connection.cursor()
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="unable to connect to database: %s" % e)
     changed = False
     lang_dropped = False
@@ -267,4 +288,7 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+from ansible.module_utils.pycompat24 import get_exception
+
+if __name__ == '__main__':
+    main()

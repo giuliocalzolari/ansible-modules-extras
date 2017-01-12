@@ -30,6 +30,10 @@ from ansible.module_utils.univention_umc import (
 )
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: udm_dns_zone
@@ -103,10 +107,13 @@ options:
 
 EXAMPLES = '''
 # Create a DNS zone on a UCS
-- udm_dns_zone: zone=example.com
-                type=forward_zone
-                nameserver=['ucs.example.com']
-                interfaces=['192.0.2.1']
+- udm_dns_zone:
+    zone: example.com
+    type: forward_zone
+    nameserver:
+      - ucs.example.com
+    interfaces:
+      - 192.0.2.1
 '''
 
 

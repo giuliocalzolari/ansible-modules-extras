@@ -33,6 +33,10 @@ from ansible.module_utils.univention_umc import (
 from dateutil.relativedelta import relativedelta
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: udm_user
@@ -318,25 +322,28 @@ options:
 
 EXAMPLES = '''
 # Create a user on a UCS
-- udm_user: name=FooBar
-            password=secure_password
-            firstname=Foo
-            lastname=Bar
+- udm_user:
+    name: FooBar
+    password: secure_password
+    firstname: Foo
+    lastname: Bar
 
 # Create a user with the DN
 # C(uid=foo,cn=teachers,cn=users,ou=school,dc=school,dc=example,dc=com)
-- udm_user: name=foo
-            password=secure_password
-            firstname=Foo
-            lastname=Bar
-            ou=school
-            subpath='cn=teachers,cn=users'
+- udm_user:
+    name: foo
+    password: secure_password
+    firstname: Foo
+    lastname: Bar
+    ou: school
+    subpath: 'cn=teachers,cn=users'
 # or define the position
-- udm_user: name=foo
-            password=secure_password
-            firstname=Foo
-            lastname=Bar
-            position='cn=teachers,cn=users,ou=school,dc=school,dc=example,dc=com'
+- udm_user:
+    name: foo
+    password: secure_password
+    firstname: Foo
+    lastname: Bar
+    position: 'cn=teachers,cn=users,ou=school,dc=school,dc=example,dc=com'
 '''
 
 

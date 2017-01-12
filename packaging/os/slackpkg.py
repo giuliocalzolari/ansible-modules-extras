@@ -22,6 +22,10 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: slackpkg
@@ -56,14 +60,19 @@ requirements: [ "Slackware >= 12.2" ]
 
 EXAMPLES = '''
 # Install package foo
-- slackpkg: name=foo state=present
+- slackpkg:
+    name: foo
+    state: present
 
 # Remove packages foo and bar
-- slackpkg: name=foo,bar state=absent
+- slackpkg:
+    name: foo,bar
+    state: absent
 
 # Make sure that it is the most updated package
-- slackpkg: name=foo state=latest
-
+- slackpkg:
+    name: foo
+    state: latest
 '''
 
 
@@ -196,4 +205,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()

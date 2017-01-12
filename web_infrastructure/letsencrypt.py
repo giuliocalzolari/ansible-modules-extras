@@ -20,8 +20,13 @@
 
 import binascii
 import copy
+import locale
 import textwrap
 from datetime import datetime
+
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -103,8 +108,10 @@ options:
     alias: ['cert']
   remaining_days:
     description:
-      - "The number of days the certificate must have left being valid before it
-         will be renewed."
+      - "The number of days the certificate must have left being valid.
+         If C(remaining_days < cert_days), then it will be renewed.
+         If the certificate is not renewed, module return values will not
+         include C(challenge_data)."         
     required: false
     default: 10
 '''
@@ -120,8 +127,8 @@ EXAMPLES = '''
 # for example:
 #
 # - copy:
-#     dest: /var/www/html/{{ sample_com_http_challenge['challenge_data']['sample.com']['http-01']['resource'] }}
-#     content: "{{ sample_com_http_challenge['challenge_data']['sample.com']['http-01']['resource_value'] }}"
+#     dest: /var/www/html/{{ sample_com_challenge['challenge_data']['sample.com']['http-01']['resource'] }}
+#     content: "{{ sample_com_challenge['challenge_data']['sample.com']['http-01']['resource_value'] }}"
 #     when: sample_com_challenge|changed
 
 - letsencrypt:
@@ -204,7 +211,7 @@ def get_cert_days(module,cert_file):
     except AttributeError:
         module.fail_json(msg="No 'Not after' date found in {0}".format(cert_file))
     except ValueError:
-        module.fail_json(msg="Faild to parse 'Not after' date of {0}".format(cert_file))
+        module.fail_json(msg="Failed to parse 'Not after' date of {0}".format(cert_file))
     now = datetime.datetime.utcnow()
     return (not_after - now).days
 
@@ -261,8 +268,8 @@ def write_file(module, dest, content):
 class ACMEDirectory(object):
     '''
     The ACME server directory. Gives access to the available resources
-    and the Replay-Nonce for a given uri. This only works for
-    uris that permit GET requests (so normally not the ones that
+    and the Replay-Nonce for a given URI. This only works for
+    URIs that permit GET requests (so normally not the ones that
     require authentication).
     https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.2
     '''
@@ -767,6 +774,9 @@ def main():
         ),
         supports_check_mode = True,
     )
+ 
+    # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
+    locale.setlocale(locale.LC_ALL, "C")
 
     cert_days = get_cert_days(module,module.params['dest'])
     if cert_days < module.params['remaining_days']:

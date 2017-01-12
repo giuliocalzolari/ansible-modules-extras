@@ -18,11 +18,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: haproxy
 version_added: "1.9"
 short_description: Enable, disable, and set weights for HAProxy backend servers using socket commands.
+author: "Ravi Bhure (@ravibhure)"
 description:
     - Enable, disable, and set weights for HAProxy backend servers using socket
       commands.
@@ -97,36 +102,74 @@ options:
 
 EXAMPLES = '''
 # disable server in 'www' backend pool
-- haproxy: state=disabled host={{ inventory_hostname }} backend=www
+- haproxy:
+    state: disabled
+    host: '{{ inventory_hostname }}'
+    backend: www
 
 # disable server without backend pool name (apply to all available backend pool)
-- haproxy: state=disabled host={{ inventory_hostname }}
+- haproxy:
+    state: disabled
+    host: '{{ inventory_hostname }}'
 
 # disable server, provide socket file
-- haproxy: state=disabled host={{ inventory_hostname }} socket=/var/run/haproxy.sock backend=www
+- haproxy:
+    state: disabled
+    host: '{{ inventory_hostname }}'
+    socket: /var/run/haproxy.sock
+    backend: www
 
 # disable server, provide socket file, wait until status reports in maintenance
-- haproxy: state=disabled host={{ inventory_hostname }} socket=/var/run/haproxy.sock backend=www wait=yes
+- haproxy:
+    state: disabled
+    host: '{{ inventory_hostname }}'
+    socket: /var/run/haproxy.sock
+    backend: www
+    wait: yes
 
 # disable backend server in 'www' backend pool and drop open sessions to it
-- haproxy: state=disabled host={{ inventory_hostname }} backend=www socket=/var/run/haproxy.sock shutdown_sessions=true
+- haproxy:
+    state: disabled
+    host: '{{ inventory_hostname }}'
+    backend: www
+    socket: /var/run/haproxy.sock
+    shutdown_sessions: true
 
 # disable server without backend pool name (apply to all available backend pool) but fail when the backend host is not found
-- haproxy: state=disabled host={{ inventory_hostname }} fail_on_not_found=yes
+- haproxy:
+    state: disabled
+    host: '{{ inventory_hostname }}'
+    fail_on_not_found: yes
 
 # enable server in 'www' backend pool
-- haproxy: state=enabled host={{ inventory_hostname }} backend=www
+- haproxy:
+    state: enabled
+    host: '{{ inventory_hostname }}'
+    backend: www
 
 # enable server in 'www' backend pool wait until healthy
-- haproxy: state=enabled host={{ inventory_hostname }} backend=www wait=yes
+- haproxy:
+    state: enabled
+    host: '{{ inventory_hostname }}'
+    backend: www
+    wait: yes
 
 # enable server in 'www' backend pool wait until healthy. Retry 10 times with intervals of 5 seconds to retrieve the health
-- haproxy: state=enabled host={{ inventory_hostname }} backend=www wait=yes wait_retries=10 wait_interval=5
+- haproxy:
+    state: enabled
+    host: '{{ inventory_hostname }}'
+    backend: www
+    wait: yes
+    wait_retries: 10
+    wait_interval: 5
 
 # enable server in 'www' backend pool with change server(s) weight
-- haproxy: state=enabled host={{ inventory_hostname }} socket=/var/run/haproxy.sock weight=10 backend=www
-
-author: "Ravi Bhure (@ravibhure)"
+- haproxy:
+    state: enabled
+    host: '{{ inventory_hostname }}'
+    socket: /var/run/haproxy.sock
+    weight: 10
+    backend: www
 '''
 
 import socket
@@ -196,10 +239,10 @@ class HAProxy(object):
         """
         Capture the output for a command
         """
-        if not 'command' in self.command_results.keys():
+        if 'command' not in self.command_results:
             self.command_results['command'] = []
         self.command_results['command'].append(cmd)
-        if not 'output' in self.command_results.keys():
+        if 'output' not in self.command_results:
             self.command_results['output'] = []
         self.command_results['output'].append(output)
 
@@ -211,7 +254,7 @@ class HAProxy(object):
         """
         data = self.execute('show stat', 200, False).lstrip('# ')
         r = csv.DictReader(data.splitlines())
-        return map(lambda d: d['pxname'], filter(lambda d: d['svname'] == 'BACKEND', r))
+        return tuple(map(lambda d: d['pxname'], filter(lambda d: d['svname'] == 'BACKEND', r)))
 
 
     def execute_for_backends(self, cmd, pxname, svname, wait_for_status = None):
@@ -244,7 +287,7 @@ class HAProxy(object):
         """
         data = self.execute('show stat', 200, False).lstrip('# ')
         r = csv.DictReader(data.splitlines())
-        state = map(lambda d: { 'status': d['status'], 'weight': d['weight'] }, filter(lambda d: (pxname is None or d['pxname'] == pxname) and d['svname'] == svname, r))
+        state = tuple(map(lambda d: { 'status': d['status'], 'weight': d['weight'] }, filter(lambda d: (pxname is None or d['pxname'] == pxname) and d['svname'] == svname, r)))
         return state or None
 
 
@@ -347,5 +390,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
-
+if __name__ == '__main__':
+    main()

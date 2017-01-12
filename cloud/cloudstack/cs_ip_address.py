@@ -19,6 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: cs_ip_address
@@ -139,62 +143,34 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
             'ipaddress': 'ip_address',
         }
 
-
-    #TODO: Add to parent class, duplicated in cs_network
-    def get_network(self, key=None, network=None):
-        if not network:
-            network = self.module.params.get('network')
-
-        if not network:
-            return None
-
-        args                = {}
-        args['account']     = self.get_account('name')
-        args['domainid']    = self.get_domain('id')
-        args['projectid']   = self.get_project('id')
-        args['zoneid']      = self.get_zone('id')
-
-        networks = self.cs.listNetworks(**args)
-        if not networks:
-            self.module.fail_json(msg="No networks available")
-
-        for n in networks['network']:
-            if network in [ n['displaytext'], n['name'], n['id'] ]:
-                return self._get_by_key(key, n)
-        self.module.fail_json(msg="Network '%s' not found" % network)
-
-
-    #TODO: Merge changes here with parent class
     def get_ip_address(self, key=None):
         if self.ip_address:
             return self._get_by_key(key, self.ip_address)
 
         ip_address = self.module.params.get('ip_address')
-        if not ip_address:
-            self.module.fail_json(msg="IP address param 'ip_address' is required")
-
-        args = {}
-        args['ipaddress'] = ip_address
-        args['account'] = self.get_account(key='name')
-        args['domainid'] = self.get_domain(key='id')
-        args['projectid'] = self.get_project(key='id')
-        args['vpcid'] = self.get_vpc(key='id')
+        args = {
+            'ipaddress': self.module.params.get('ip_address'),
+            'account': self.get_account(key='name'),
+            'domainid': self.get_domain(key='id'),
+            'projectid': self.get_project(key='id'),
+            'vpcid': self.get_vpc(key='id'),
+        }
         ip_addresses = self.cs.listPublicIpAddresses(**args)
 
         if ip_addresses:
             self.ip_address = ip_addresses['publicipaddress'][0]
         return self._get_by_key(key, self.ip_address)
 
-
     def associate_ip_address(self):
         self.result['changed'] = True
-        args = {}
-        args['account'] = self.get_account(key='name')
-        args['domainid'] = self.get_domain(key='id')
-        args['projectid'] = self.get_project(key='id')
-        args['networkid'] = self.get_network(key='id')
-        args['zoneid'] = self.get_zone(key='id')
-        ip_address = {}
+        args = {
+            'account': self.get_account(key='name'),
+            'domainid': self.get_domain(key='id'),
+            'projectid': self.get_project(key='id'),
+            'networkid': self.get_network(key='id'),
+            'zoneid': self.get_zone(key='id'),
+        }
+        ip_address = None
         if not self.module.check_mode:
             res = self.cs.associateIpAddress(**args)
             if 'errortext' in res:
@@ -202,15 +178,13 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
 
             poll_async = self.module.params.get('poll_async')
             if poll_async:
-                res = self.poll_job(res, 'ipaddress')
-            ip_address = res
+                ip_address = self.poll_job(res, 'ipaddress')
         return ip_address
-
 
     def disassociate_ip_address(self):
         ip_address = self.get_ip_address()
-        if ip_address is None:
-            return ip_address
+        if not ip_address:
+            return None
         if ip_address['isstaticnat']:
             self.module.fail_json(msg="IP address is allocated via static nat")
 
@@ -242,6 +216,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_together=cs_required_together(),
+        required_if=[
+            ('state', 'absent', ['ip_address']),
+        ],
         supports_check_mode=True
     )
 

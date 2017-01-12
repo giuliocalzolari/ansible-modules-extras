@@ -19,6 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: dladm_vnic
@@ -66,13 +70,23 @@ options:
 
 EXAMPLES = '''
 # Create 'vnic0' VNIC over 'bnx0' link
-dladm_vnic: name=vnic0 link=bnx0 state=present
+- dladm_vnic:
+    name: vnic0
+    link: bnx0
+    state: present
 
 # Create VNIC with specified MAC and VLAN tag over 'aggr0'
-dladm_vnic: name=vnic1 link=aggr0 mac=00:00:5E:00:53:23 vlan=4
+- dladm_vnic:
+    name: vnic1
+    link: aggr0
+    mac: '00:00:5E:00:53:23'
+    vlan: 4
 
 # Remove 'vnic0' VNIC
-dladm_vnic: name=vnic0 link=bnx0 state=absent
+- dladm_vnic:
+    name: vnic0
+    link: bnx0
+    state: absent
 '''
 
 RETURN = '''
@@ -255,4 +269,6 @@ def main():
     module.exit_json(**result)
 
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

@@ -15,6 +15,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: virt
@@ -66,7 +70,9 @@ author:
 
 EXAMPLES = '''
 # a playbook task line:
-- virt: name=alpha state=running
+- virt:
+    name: alpha
+    state: running
 
 # /usr/bin/ansible invocations
 ansible host -m virt -a "name=alpha command=status"
@@ -76,12 +82,16 @@ ansible host -m virt -a "name=alpha command=create uri=lxc:///"
 # a playbook example of defining and launching an LXC guest
 tasks:
   - name: define vm
-    virt: name=foo
-          command=define
-          xml="{{ lookup('template', 'container-template.xml.j2') }}"
-          uri=lxc:///
+    virt:
+        name: foo
+        command: define
+        xml: '{{ lookup('template', 'container-template.xml.j2') }}'
+        uri: 'lxc:///'
   - name: start vm
-    virt: name=foo state=running uri=lxc:///
+    virt:
+        name: foo
+        state: running
+        uri: 'lxc:///'
 '''
 
 RETURN = '''
@@ -430,7 +440,7 @@ def core(module):
 
     if state and command=='list_vms':
         res = v.list_vms(state=state)
-        if type(res) != dict:
+        if not isinstance(res, dict):
             res = { command: res }
         return VIRT_SUCCESS, res
 
@@ -477,13 +487,13 @@ def core(module):
                     res = {'changed': True, 'created': guest}
                 return VIRT_SUCCESS, res
             res = getattr(v, command)(guest)
-            if type(res) != dict:
+            if not isinstance(res, dict):
                 res = { command: res }
             return VIRT_SUCCESS, res
 
         elif hasattr(v, command):
             res = getattr(v, command)()
-            if type(res) != dict:
+            if not isinstance(res, dict):
                 res = { command: res }
             return VIRT_SUCCESS, res
 
@@ -510,7 +520,8 @@ def main():
     rc = VIRT_SUCCESS
     try:
         rc, result = core(module)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg=str(e))
 
     if rc != 0: # something went wrong emit the msg
@@ -521,4 +532,7 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+from ansible.module_utils.pycompat24 import get_exception
+
+if __name__ == '__main__':
+    main()

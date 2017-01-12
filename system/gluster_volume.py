@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = """
 module: gluster_volume
 short_description: Manage GlusterFS volumes
@@ -121,26 +125,53 @@ author: "Taneli Leppä (@rosmo)"
 
 EXAMPLES = """
 - name: create gluster volume
-  gluster_volume: state=present name=test1 bricks=/bricks/brick1/g1 rebalance=yes cluster="192.0.2.10,192.0.2.11"
+  gluster_volume:
+    state: present
+    name: test1
+    bricks: /bricks/brick1/g1
+    rebalance: yes
+    cluster:
+      - 192.0.2.10
+      - 192.0.2.11
   run_once: true
 
 - name: tune
-  gluster_volume: state=present name=test1 options='{performance.cache-size: 256MB}'
+  gluster_volume:
+    state: present
+    name: test1
+    options:
+      performance.cache-size: 256MB
 
 - name: start gluster volume
-  gluster_volume: state=started name=test1
+  gluster_volume:
+    state: started
+    name: test1
 
 - name: limit usage
-  gluster_volume: state=present name=test1 directory=/foo quota=20.0MB
+  gluster_volume:
+    state: present
+    name: test1
+    directory: /foo
+    quota: 20.0MB
 
 - name: stop gluster volume
-  gluster_volume: state=stopped name=test1
+  gluster_volume:
+    state: stopped
+    name: test1
 
 - name: remove gluster volume
-  gluster_volume: state=absent name=test1
+  gluster_volume:
+    state: absent
+    name: test1
 
 - name: create gluster volume with multiple bricks
-  gluster_volume: state=present name=test2 bricks="/bricks/brick1/g2,/bricks/brick2/g2" cluster="192.0.2.10,192.0.2.11"
+  gluster_volume:
+    state: present
+    name: test2
+    bricks: /bricks/brick1/g2,/bricks/brick2/g2
+    cluster:
+      - 192.0.2.10
+      - 192.0.2.11
   run_once: true
 """
 
@@ -274,7 +305,7 @@ def wait_for_peer(host):
 def probe(host, myhostname):
     global module
     out = run_gluster([ 'peer', 'probe', host ])
-    if not out.find('localhost') and not wait_for_peer(host):
+    if out.find('localhost') == -1 and not wait_for_peer(host):
         module.fail_json(msg='failed to probe peer %s on %s' % (host, myhostname))
     changed = True
 
@@ -495,4 +526,5 @@ def main():
 
     module.exit_json(changed=changed, ansible_facts=facts)
 
-main()
+if __name__ == '__main__':
+    main()

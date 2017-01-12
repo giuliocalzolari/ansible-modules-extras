@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public licenses
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION='''
 ---
 module: atomic_host
@@ -33,7 +37,7 @@ requirements:
 options:
     revision:
         description:
-          - The version number of the atomic host to be deployed. Providing ```latest``` will upgrade to the latest available version.
+          - The version number of the atomic host to be deployed. Providing C(latest) will upgrade to the latest available version.
         required: false
         default: latest
         aliases: ["version"]
@@ -42,11 +46,12 @@ options:
 EXAMPLES = '''
 
 # Upgrade the atomic host platform to the latest version (atomic host upgrade)
-- atomic_host: revision=latest
+- atomic_host:
+    revision: latest
 
 # Deploy a specific revision as the atomic host (atomic host deploy 23.130)
-- atomic_host: revision=23.130
-
+- atomic_host:
+    revision: 23.130
 '''
 
 RETURN = '''

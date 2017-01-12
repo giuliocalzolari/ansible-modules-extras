@@ -15,6 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 
 module: pingdom
@@ -69,18 +73,20 @@ notes:
 
 EXAMPLES = '''
 # Pause the check with the ID of 12345.
-- pingdom: uid=example@example.com
-           passwd=password123
-           key=apipassword123
-           checkid=12345
-           state=paused
+- pingdom:
+    uid: example@example.com
+    passwd: password123
+    key: apipassword123
+    checkid: 12345
+    state: paused
 
 # Unpause the check with the ID of 12345.
-- pingdom: uid=example@example.com
-           passwd=password123
-           key=apipassword123
-           checkid=12345
-           state=running
+- pingdom:
+    uid: example@example.com
+    passwd: password123
+    key: apipassword123
+    checkid: 12345
+    state: running
 '''
 
 try:
@@ -149,4 +155,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

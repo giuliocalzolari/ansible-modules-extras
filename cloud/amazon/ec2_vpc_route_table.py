@@ -13,6 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'committer',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ec2_vpc_route_table
@@ -107,8 +111,6 @@ EXAMPLES = '''
 
 '''
 
-
-import sys  # noqa
 import re
 
 try:
@@ -120,6 +122,9 @@ except ImportError:
     HAS_BOTO = False
     if __name__ != '__main__':
         raise
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
 
 
 class AnsibleRouteTableException(Exception):
@@ -179,7 +184,7 @@ def find_subnets(vpc_conn, vpc_id, identified_subnets):
         for cidr in subnet_cidrs:
             if not any(s.cidr_block == cidr for s in subnets_by_cidr):
                 raise AnsibleSubnetSearchException(
-                    'Subnet CIDR "{0}" does not exist'.format(subnet_cidr))
+                    'Subnet CIDR "{0}" does not exist'.format(cidr))
 
     subnets_by_name = []
     if subnet_names:
@@ -298,7 +303,7 @@ def route_spec_matches_route(route_spec, route):
             if all((not route.gateway_id, not route.instance_id, not route.interface_id, not route.vpc_peering_connection_id)):
                 return True
 
-    for k in key_attr_map.iterkeys():
+    for k in key_attr_map:
         if k in route_spec:
             if route_spec[k] != getattr(route, k):
                 return False
@@ -605,7 +610,7 @@ def main():
     if region:
         try:
             connection = connect_to_aws(boto.vpc, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")
@@ -627,8 +632,6 @@ def main():
 
     module.exit_json(**result)
 
-from ansible.module_utils.basic import *  # noqa
-from ansible.module_utils.ec2 import *  # noqa
 
 if __name__ == '__main__':
     main()

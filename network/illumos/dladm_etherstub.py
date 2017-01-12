@@ -19,6 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: dladm_etherstub
@@ -49,10 +53,14 @@ options:
 
 EXAMPLES = '''
 # Create 'stub0' etherstub
-dladm_etherstub: name=stub0 state=present
+- dladm_etherstub:
+    name: stub0
+    state: present
 
 # Remove 'stub0 etherstub
-dladm_etherstub: name=stub0 state=absent
+- dladm_etherstub:
+    name: stub0
+    state: absent
 '''
 
 RETURN = '''
@@ -168,4 +176,6 @@ def main():
     module.exit_json(**result)
 
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

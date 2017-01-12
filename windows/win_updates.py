@@ -21,6 +21,10 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: win_updates
@@ -69,15 +73,22 @@ notes:
 '''
 
 EXAMPLES = '''
-    # Install all security, critical, and rollup updates
-    win_updates:
-        category_names: ['SecurityUpdates','CriticalUpdates','UpdateRollups']
+# Install all security, critical, and rollup updates
+- win_updates:
+    category_names:
+      - SecurityUpdates
+      - CriticalUpdates
+      - UpdateRollups
 
-    # Install only security updates
-    win_updates: category_names=SecurityUpdates
+# Install only security updates
+- win_updates:
+    category_names: SecurityUpdates
 
-    # Search-only, return list of found updates (if any), log to c:\ansible_wu.txt
-    win_updates: category_names=SecurityUpdates state=searched log_path=c:/ansible_wu.txt
+# Search-only, return list of found updates (if any), log to c:\ansible_wu.txt
+- win_updates:
+    category_names: SecurityUpdates
+    state: searched
+    log_path: c:\ansible_wu.txt
 '''
 
 RETURN = '''

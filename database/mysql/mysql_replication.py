@@ -22,6 +22,10 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: mysql_replication
@@ -103,16 +107,25 @@ extends_documentation_fragment: mysql
 
 EXAMPLES = '''
 # Stop mysql slave thread
-- mysql_replication: mode=stopslave
+- mysql_replication:
+    mode: stopslave
 
 # Get master binlog file name and binlog position
-- mysql_replication: mode=getmaster
+- mysql_replication:
+    mode: getmaster
 
 # Change master to master server 192.0.2.1 and use binary log 'mysql-bin.000009' with position 4578
-- mysql_replication: mode=changemaster master_host=192.0.2.1 master_log_file=mysql-bin.000009 master_log_pos=4578
+- mysql_replication:
+    mode: changemaster
+    master_host: 192.0.2.1
+    master_log_file: mysql-bin.000009
+    master_log_pos: 4578
 
 # Check slave status using port 3308
-- mysql_replication: mode=getslave login_host=ansible.example.com login_port=3308
+- mysql_replication:
+    mode: getslave
+    login_host: ansible.example.com
+    login_port: 3308
 '''
 
 import os
@@ -124,6 +137,10 @@ except ImportError:
     mysqldb_found = False
 else:
     mysqldb_found = True
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.mysql import mysql_connect
+from ansible.module_utils.pycompat24 import get_exception
 
 
 def get_master_status(cursor):
@@ -212,10 +229,6 @@ def main():
             ssl_ca=dict(default=None),
         )
     )
-    user = module.params["login_user"]
-    password = module.params["login_password"]
-    host = module.params["login_host"]
-    port = module.params["login_port"]
     mode = module.params["mode"]
     master_host = module.params["master_host"]
     master_user = module.params["master_user"]
@@ -250,7 +263,8 @@ def main():
     try:
         cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, None, 'MySQLdb.cursors.DictCursor',
                                connect_timeout=connect_timeout)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         if os.path.exists(config_file):
             module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. Exception message: %s" % (config_file, e))
         else:
@@ -324,9 +338,11 @@ def main():
             chm.append("MASTER_AUTO_POSITION = 1")
         try:
             changemaster(cursor, chm, chm_params)
-        except MySQLdb.Warning, e:
-                result['warning'] = str(e)
-        except Exception, e:
+        except MySQLdb.Warning:
+            e = get_exception()
+            result['warning'] = str(e)
+        except Exception:
+            e = get_exception()
             module.fail_json(msg='%s. Query == CHANGE MASTER TO %s' % (e, chm))
         result['changed']=True
         module.exit_json(**result)
@@ -355,8 +371,7 @@ def main():
         else:
             module.exit_json(msg="Slave already reset", changed=False)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.mysql import *
-main()
-warnings.simplefilter("ignore")
+
+if __name__ == '__main__':
+    main()
+    warnings.simplefilter("ignore")

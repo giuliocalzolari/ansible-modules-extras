@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = """
 ---
 module: cloudtrail
@@ -80,16 +84,25 @@ extends_documentation_fragment: aws
 EXAMPLES = """
   - name: enable cloudtrail
     local_action: cloudtrail
-      state=enabled name=main s3_bucket_name=ourbucket
-      s3_key_prefix=cloudtrail region=us-east-1
+      state: enabled
+      name: main
+      s3_bucket_name: ourbucket
+      s3_key_prefix: cloudtrail
+      region: us-east-1
 
   - name: enable cloudtrail with different configuration
     local_action: cloudtrail
-      state=enabled name=main s3_bucket_name=ourbucket2
-      s3_key_prefix='' region=us-east-1
+      state: enabled
+      name: main
+      s3_bucket_name: ourbucket2
+      s3_key_prefix: ''
+      region: us-east-1
 
   - name: remove cloudtrail
-    local_action: cloudtrail state=disabled name=main region=us-east-1
+    local_action: cloudtrail
+      state: disabled
+      name: main
+      region: us-east-1
 """
 
 HAS_BOTO = False
@@ -100,6 +113,10 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_ec2_creds
+
 
 class CloudTrailManager:
     """Handles cloudtrail configuration"""
@@ -112,7 +129,7 @@ class CloudTrailManager:
 
         try:
             self.conn = connect_to_aws(boto.cloudtrail, self.region, **self.aws_connect_params)
-        except boto.exception.NoAuthHandlerFound, e:
+        except boto.exception.NoAuthHandlerFound as e:
             self.module.fail_json(msg=str(e))
 
     def view_status(self, name):
@@ -152,13 +169,13 @@ def main():
 
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state={'required': True, 'choices': ['enabled', 'disabled'] },
-        name={'required': True, 'type': 'str' },
-        s3_bucket_name={'required': False, 'type': 'str' },
-        s3_key_prefix={'default':'', 'required': False, 'type': 'str' },
-        include_global_events={'default':True, 'required': False, 'type': 'bool' },
+        state={'required': True, 'choices': ['enabled', 'disabled']},
+        name={'required': True, 'type': 'str'},
+        s3_bucket_name={'required': False, 'type': 'str'},
+        s3_key_prefix={'default': '', 'required': False, 'type': 'str'},
+        include_global_events={'default': True, 'required': False, 'type': 'bool'},
     ))
-    required_together = ( ['state', 's3_bucket_name'] )
+    required_together = (['state', 's3_bucket_name'])
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_together=required_together)
 
@@ -176,6 +193,7 @@ def main():
     s3_bucket_name = module.params['s3_bucket_name']
     # remove trailing slash from the key prefix, really messes up the key structure.
     s3_key_prefix = module.params['s3_key_prefix'].rstrip('/')
+
     include_global_events = module.params['include_global_events']
 
     #if module.params['state'] == 'present' and 'ec2_elbs' not in module.params:
@@ -190,7 +208,7 @@ def main():
             results['view'] = cf_man.view(ct_name)
             # only update if the values have changed.
             if results['view']['S3BucketName']              != s3_bucket_name or \
-              results['view']['S3KeyPrefix']                != s3_key_prefix  or \
+              results['view'].get('S3KeyPrefix', '')      != s3_key_prefix  or \
               results['view']['IncludeGlobalServiceEvents'] != include_global_events:
                 if not module.check_mode:
                     results['update'] = cf_man.update(name=ct_name, s3_bucket_name=s3_bucket_name, s3_key_prefix=s3_key_prefix, include_global_service_events=include_global_events)
@@ -222,8 +240,6 @@ def main():
 
     module.exit_json(**results)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == '__main__':
+    main()

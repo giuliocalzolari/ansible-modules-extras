@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION='''
 ---
 module: atomic_image
@@ -26,7 +30,7 @@ description:
 version_added: "2.2"
 author: "Saravanan KR @krsacme"
 notes:
-    - Host should be support ```atomic``` command
+    - Host should be support C(atomic) command
 requirements:
   - atomic
   - "python >= 2.6"
@@ -39,7 +43,7 @@ options:
     state:
         description:
           - The state of the container image.
-          - The state ```latest``` will ensure container image is upgraded to the latest version and forcefully restart container, if running.
+          - The state C(latest) will ensure container image is upgraded to the latest version and forcefully restart container, if running.
         required: False
         choices: ["present", "absent", "latest"]
         default: latest
@@ -54,7 +58,9 @@ options:
 EXAMPLES = '''
 
 # Execute the run command on rsyslog container image (atomic run rhel7/rsyslog)
-- atomic_image: name=rhel7/rsyslog state=latest
+- atomic_image:
+    name: rhel7/rsyslog
+    state: latest
 
 '''
 

@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: riak
@@ -88,13 +92,17 @@ options:
 
 EXAMPLES = '''
 # Join's a Riak node to another node
-- riak: command=join target_node=riak@10.1.1.1
+- riak:
+    command: join
+    target_node: riak@10.1.1.1
 
 # Wait for handoffs to finish.  Use with async and poll.
-- riak: wait_for_handoffs=yes
+- riak:
+    wait_for_handoffs: yes
 
 # Wait for riak_kv service to startup
-- riak: wait_for_service=kv
+- riak:
+    wait_for_service: kv
 '''
 
 import time

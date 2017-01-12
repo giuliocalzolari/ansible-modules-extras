@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: flowdock
@@ -89,18 +93,20 @@ requirements: [ ]
 '''
 
 EXAMPLES = '''
-- flowdock: type=inbox
-            token=AAAAAA
-            from_address=user@example.com
-            source='my cool app'
-            msg='test from ansible'
-            subject='test subject'
+- flowdock:
+    type: inbox
+    token: AAAAAA
+    from_address: user@example.com
+    source: my cool app
+    msg: test from ansible
+    subject: test subject
 
-- flowdock: type=chat
-            token=AAAAAA
-            external_user_name=testuser
-            msg='test from ansible'
-            tags=tag1,tag2,tag3
+- flowdock:
+    type: chat
+    token: AAAAAA
+    external_user_name: testuser
+    msg: test from ansible
+    tags: tag1,tag2,tag3
 '''
 
 import urllib
@@ -189,5 +195,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
 
-main()
-
+if __name__ == '__main__':
+    main()

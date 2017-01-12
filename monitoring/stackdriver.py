@@ -15,6 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 
 module: stackdriver
@@ -84,9 +88,21 @@ options:
 '''
 
 EXAMPLES = '''
-- stackdriver: key=AAAAAA event=deploy deployed_to=production deployed_by=leeroyjenkins repository=MyWebApp revision_id=abcd123
+- stackdriver:
+    key: AAAAAA
+    event: deploy
+    deployed_to: production
+    deployed_by: leeroyjenkins
+    repository: MyWebApp
+    revision_id: abcd123
 
-- stackdriver: key=AAAAAA event=annotation msg="Greetings from Ansible" annotated_by=leeroyjenkins level=WARN instance_id=i-abcd1234
+- stackdriver:
+    key: AAAAAA
+    event: annotation
+    msg: Greetings from Ansible
+    annotated_by: leeroyjenkins
+    level: WARN
+    instance_id: i-abcd1234
 '''
 
 # ===========================================
@@ -101,6 +117,10 @@ except ImportError:
     except ImportError:
         # Let snippet from module_utils/basic.py return a proper error in this case
         pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.urls import fetch_url
 
 
 def send_deploy_event(module, key, revision_id, deployed_by='Ansible', deployed_to=None, repository=None):
@@ -195,7 +215,8 @@ def main():
             module.fail_json(msg="revision_id required for deploy events")
         try:
             send_deploy_event(module, key, revision_id, deployed_by, deployed_to, repository)
-        except Exception, e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg="unable to sent deploy event: %s" % e)
 
     if event == 'annotation':
@@ -203,14 +224,13 @@ def main():
             module.fail_json(msg="msg required for annotation events")
         try:
             send_annotation_event(module, key, msg, annotated_by, level, instance_id, event_epoch)
-        except Exception, e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg="unable to sent annotation event: %s" % e)
 
     changed = True
     module.exit_json(changed=changed, deployed_by=deployed_by)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
-main()
+if __name__ == '__main__':
+    main()

@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: at
@@ -64,13 +68,22 @@ author: "Richard Isaacson (@risaacson)"
 
 EXAMPLES = '''
 # Schedule a command to execute in 20 minutes as root.
-- at: command="ls -d / > /dev/null" count=20 units="minutes"
+- at:
+    command: "ls -d / > /dev/null"
+    count: 20
+    units: minutes
 
 # Match a command to an existing job and delete the job.
-- at: command="ls -d / > /dev/null" state="absent"
+- at:
+    command: "ls -d / > /dev/null"
+    state: absent
 
 # Schedule a command to execute in 20 minutes making sure it is unique in the queue.
-- at: command="ls -d / > /dev/null" unique=true count=20 units="minutes"
+- at:
+    command: "ls -d / > /dev/null"
+    unique: true
+    count: 20
+    units: minutes
 '''
 
 import os
@@ -197,4 +210,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

@@ -20,6 +20,10 @@
 #
 import time
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: monit
@@ -53,7 +57,9 @@ author: "Darryl Stoflet (@dstoflet)"
 
 EXAMPLES = '''
 # Manage the state of program "httpd" to be in "started" state.
-- monit: name=httpd state=started
+- monit:
+    name: httpd
+    state: started
 '''
 
 def main():
@@ -182,4 +188,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()

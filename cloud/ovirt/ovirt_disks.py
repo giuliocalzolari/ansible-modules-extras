@@ -28,6 +28,10 @@ except ImportError:
 from ansible.module_utils.ovirt import *
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ovirt_disks
@@ -65,7 +69,10 @@ options:
         default: 'virtio'
     format:
         description:
-            - "Format of the disk. Either copy-on-write or raw."
+            - Specify format of the disk.
+            - If (cow) format is used, disk will by created as sparse, so space will be allocated for the volume as needed, also known as I(thin provision).
+            - If (raw) format is used, disk storage will be allocated right away, also known as I(preallocated).
+            - Note that this option isn't idempotent as it's not currently possible to change format of the disk via API.
         choices: ['raw', 'cow']
     storage_domain:
         description:
@@ -168,6 +175,7 @@ class DisksModule(BaseModule):
             format=otypes.DiskFormat(
                 self._module.params.get('format')
             ) if self._module.params.get('format') else None,
+            sparse=False if self._module.params.get('format') == 'raw' else True,
             provisioned_size=convert_to_bytes(
                 self._module.params.get('size')
             ),
@@ -198,7 +206,6 @@ class DisksModule(BaseModule):
         return (
             equal(self._module.params.get('description'), entity.description) and
             equal(convert_to_bytes(self._module.params.get('size')), entity.provisioned_size) and
-            equal(self._module.params.get('format'), str(entity.format)) and
             equal(self._module.params.get('shareable'), entity.shareable)
         )
 
@@ -234,7 +241,6 @@ def main():
         vm_id=dict(default=None),
         size=dict(default=None),
         interface=dict(default=None,),
-        allocation_policy=dict(default=None),
         storage_domain=dict(default=None),
         profile=dict(default=None),
         format=dict(default=None, choices=['raw', 'cow']),
@@ -278,7 +284,7 @@ def main():
             ret = disks_module.remove()
 
         # If VM was passed attach/detach disks to/from the VM:
-        if 'vm_id' in module.params or 'vm_name' in module.params and state != 'absent':
+        if module.params.get('vm_id') is not None or module.params.get('vm_name') is not None and state != 'absent':
             vms_service = connection.system_service().vms_service()
 
             # If `vm_id` isn't specified, find VM by name:

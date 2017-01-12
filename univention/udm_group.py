@@ -30,6 +30,10 @@ from ansible.module_utils.univention_umc import (
 )
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: udm_group
@@ -74,16 +78,19 @@ options:
 
 EXAMPLES = '''
 # Create a POSIX group
-- udm_group: name=g123m-1A
+- udm_group:
+    name: g123m-1A
 
 # Create a POSIX group with the exact DN
 # C(cn=g123m-1A,cn=classes,cn=students,cn=groups,ou=school,dc=school,dc=example,dc=com)
-- udm_group: name=g123m-1A
-             subpath='cn=classes,cn=students,cn=groups'
-             ou=school
+- udm_group:
+    name: g123m-1A
+    subpath: 'cn=classes,cn=students,cn=groups'
+    ou: school
 # or
-- udm_group: name=g123m-1A
-             position='cn=classes,cn=students,cn=groups,ou=school,dc=school,dc=example,dc=com'
+- udm_group:
+    name: g123m-1A
+    position: 'cn=classes,cn=students,cn=groups,ou=school,dc=school,dc=example,dc=com'
 '''
 
 

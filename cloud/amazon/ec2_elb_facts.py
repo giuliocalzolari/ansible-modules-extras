@@ -13,6 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ec2_elb_facts
@@ -47,7 +51,7 @@ EXAMPLES = '''
 - action:
     module: debug
     msg: "{{ item.dns_name }}"
-  with_items: elb_facts.elbs
+  with_items: "{{ elb_facts.elbs }}"
 
 # Gather facts about a particular ELB
 - action:
@@ -70,7 +74,7 @@ EXAMPLES = '''
 - action:
     module: debug
     msg: "{{ item.dns_name }}"
-  with_items: elb_facts.elbs
+  with_items: "{{ elb_facts.elbs }}"
 
 '''
 
@@ -205,19 +209,23 @@ class ElbInformation(object):
             self.module.fail_json(msg = "%s: %s" % (err.error_code, err.error_message))
 
         if all_elbs:
-            for existing_lb in all_elbs:
-                if existing_lb.name in self.names:
-                    elb_array.append(self._get_elb_info(existing_lb))
-
-        return elb_array
+            if self.names:
+                for existing_lb in all_elbs:
+                    if existing_lb.name in self.names:
+                        elb_array.append(existing_lb)
+            else:
+                elb_array = all_elbs
+                    
+        return list(map(self._get_elb_info, elb_array))
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            names={'default': None, 'type': 'list'}
+            names={'default': [], 'type': 'list'}
         )
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')

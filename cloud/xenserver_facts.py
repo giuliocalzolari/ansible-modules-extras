@@ -15,6 +15,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: xenserver_facts
@@ -42,7 +46,7 @@ EXAMPLES = '''
 
 - name: Print running VMs
   debug: msg="{{ item }}"
-  with_items: xs_vms.keys()
+  with_items: "{{ xs_vms.keys() }}"
   when: xs_vms[item]['power_state'] == "Running"
 
 TASK: [Print running VMs] ***********************************************************
@@ -170,7 +174,7 @@ def main():
     obj = XenServerFacts()
     try:
         session = get_xenapi_session()
-    except XenAPI.Failure, e:
+    except XenAPI.Failure as e:
         module.fail_json(msg='%s' % e)
 
     data = {
@@ -201,4 +205,5 @@ def main():
 
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()

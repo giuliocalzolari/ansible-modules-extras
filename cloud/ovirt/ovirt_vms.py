@@ -28,6 +28,10 @@ except ImportError:
 from ansible.module_utils.ovirt import *
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ovirt_vms
@@ -60,6 +64,16 @@ options:
         description:
             - "Name of the template, which should be used to create Virtual Machine. Required if creating VM."
             - "If template is not specified and VM doesn't exist, VM will be created from I(Blank) template."
+    template_version:
+        description:
+            - "Version number of the template to be used for VM."
+            - "By default the latest available version of the template is used."
+        version_added: "2.3"
+    use_latest_template_version:
+        description:
+            - "Specify if latest template version should be used, when running a stateless VM."
+            - "If this parameter is set to I(true) stateless VM is created."
+        version_added: "2.3"
     memory:
         description:
             - "Amount of memory of the Virtual Machine. Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB)."
@@ -185,12 +199,26 @@ options:
             - "C(custom_script) - Cloud-init script which will be executed on Virtual Machine when deployed."
             - "C(dns_servers) - DNS servers to be configured on Virtual Machine."
             - "C(dns_search) - DNS search domains to be configured on Virtual Machine."
-            - "C(nic_boot_protocol) - Set boot protocol of the network interface of Virtual Machine. Can be one of None, DHCP or Static."
+            - "C(nic_boot_protocol) - Set boot protocol of the network interface of Virtual Machine. Can be one of none, dhcp or static."
             - "C(nic_ip_address) - If boot protocol is static, set this IP address to network interface of Virtual Machine."
             - "C(nic_netmask) - If boot protocol is static, set this netmask to network interface of Virtual Machine."
             - "C(nic_gateway) - If boot protocol is static, set this gateway to network interface of Virtual Machine."
             - "C(nic_name) - Set name to network interface of Virtual Machine."
             - "C(nic_on_boot) - If I(True) network interface will be set to start on boot."
+    cloud_init_nics:
+        description:
+            - "List of dictionaries representing network interafaces to be setup by cloud init."
+            - "This option is used, when user needs to setup more network interfaces via cloud init."
+            - "If one network interface is enough, user should use C(cloud_init) I(nic_*) parameters. C(cloud_init) I(nic_*) parameters
+               are merged with C(cloud_init_nics) parameters."
+            - "Dictionary can contain following values:"
+            - "C(nic_boot_protocol) - Set boot protocol of the network interface of Virtual Machine. Can be one of none, dhcp or static."
+            - "C(nic_ip_address) - If boot protocol is static, set this IP address to network interface of Virtual Machine."
+            - "C(nic_netmask) - If boot protocol is static, set this netmask to network interface of Virtual Machine."
+            - "C(nic_gateway) - If boot protocol is static, set this gateway to network interface of Virtual Machine."
+            - "C(nic_name) - Set name to network interface of Virtual Machine."
+            - "C(nic_on_boot) - If I(True) network interface will be set to start on boot."
+        version_added: "2.3"
 notes:
     - "If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
        If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -220,6 +248,13 @@ ovirt_vms:
     state: present
     name: myvm
     template: rhel7_template
+
+# Creates a stateless VM which will always use latest template version:
+ovirt_vms:
+    name: myvm
+    template: rhel7
+    cluster: mycluster
+    use_latest_template_version: true
 
 # Creates a new server rhel7 Virtual Machine from Blank template
 # on brq01 cluster with 2GiB memory and 2 vcpu cores/sockets
@@ -263,6 +298,22 @@ ovirt_vms:
            permissions: '0644'
       user_name: root
       root_password: super_password
+
+# Run VM with cloud init, with multiple network interfaces:
+ovirt_vms:
+  name: rhel7_4
+  template: rhel7
+  cluster: mycluster
+  cloud_init_nics:
+    - nic_name: eth0
+      nic_boot_protocol: dhcp
+      nic_on_boot: true
+    - nic_name: eth1
+      nic_boot_protocol: static
+      nic_ip_address: 10.34.60.86
+      nic_netmask: 255.255.252.0
+      nic_gateway: 10.34.63.254
+      nic_on_boot: true
 
 # Run VM with sysprep:
 ovirt_vms:
@@ -346,16 +397,38 @@ vm:
 
 class VmsModule(BaseModule):
 
+    def __get_template_with_version(self):
+        """
+        oVirt in version 4.1 doesn't support search by template+version_number,
+        so we need to list all templates with specific name and then iterate
+        throught it's version until we find the version we look for.
+        """
+        template = None
+        if self._module.params['template']:
+            templates_service = self._connection.system_service().templates_service()
+            templates = templates_service.list(search='name=%s' % self._module.params['template'])
+            if self._module.params['template_version']:
+                templates = [
+                    t for t in templates
+                    if t.version.version_number == self._module.params['template_version']
+                ]
+            if templates:
+                template = templates[0]
+
+        return template
+
     def build_entity(self):
+        template = self.__get_template_with_version()
         return otypes.Vm(
             name=self._module.params['name'],
             cluster=otypes.Cluster(
                 name=self._module.params['cluster']
             ) if self._module.params['cluster'] else None,
             template=otypes.Template(
-                name=self._module.params['template']
-            ) if self._module.params['template'] else None,
-            stateless=self._module.params['stateless'],
+                id=template.id,
+            ) if template else None,
+            use_latest_template_version=self._module.params['use_latest_template_version'],
+            stateless=self._module.params['stateless'] or self._module.params['use_latest_template_version'],
             delete_protected=self._module.params['delete_protected'],
             high_availability=otypes.HighAvailability(
                 enabled=self._module.params['high_availability']
@@ -403,6 +476,7 @@ class VmsModule(BaseModule):
             equal(self._module.params.get('stateless'), entity.stateless) and
             equal(self._module.params.get('cpu_shares'), entity.cpu_shares) and
             equal(self._module.params.get('delete_protected'), entity.delete_protected) and
+            equal(self._module.params.get('use_latest_template_version'), entity.use_latest_template_version) and
             equal(self._module.params.get('boot_devices'), [str(dev) for dev in getattr(entity.os, 'devices', [])])
         )
 
@@ -532,8 +606,8 @@ class VmsModule(BaseModule):
                         otypes.DiskAttachment(
                             disk=otypes.Disk(
                                 id=disk_id,
-                                active=disk.get('activate', True),
                             ),
+                            active=disk.get('activate', True),
                             interface=otypes.DiskInterface(
                                 disk.get('interface', 'virtio')
                             ),
@@ -569,34 +643,36 @@ class VmsModule(BaseModule):
                 self.changed = True
 
 
-def _get_initialization(sysprep, cloud_init):
+def _get_initialization(sysprep, cloud_init, cloud_init_nics):
     initialization = None
-    if cloud_init:
+    if cloud_init or cloud_init_nics:
         initialization = otypes.Initialization(
             nic_configurations=[
                 otypes.NicConfiguration(
                     boot_protocol=otypes.BootProtocol(
-                        cloud_init.pop('nic_boot_protocol').lower()
-                    ) if cloud_init.get('nic_boot_protocol') else None,
-                    name=cloud_init.pop('nic_name'),
-                    on_boot=cloud_init.pop('nic_on_boot'),
+                        nic.pop('nic_boot_protocol').lower()
+                    ) if nic.get('nic_boot_protocol') else None,
+                    name=nic.pop('nic_name', None),
+                    on_boot=nic.pop('nic_on_boot', None),
                     ip=otypes.Ip(
-                        address=cloud_init.pop('nic_ip_address'),
-                        netmask=cloud_init.pop('nic_netmask'),
-                        gateway=cloud_init.pop('nic_gateway'),
+                        address=nic.pop('nic_ip_address', None),
+                        netmask=nic.pop('nic_netmask', None),
+                        gateway=nic.pop('nic_gateway', None),
                     ) if (
-                        cloud_init.get('nic_gateway') is not None or
-                        cloud_init.get('nic_netmask') is not None or
-                        cloud_init.get('nic_ip_address') is not None
+                        nic.get('nic_gateway') is not None or
+                        nic.get('nic_netmask') is not None or
+                        nic.get('nic_ip_address') is not None
                     ) else None,
                 )
-            ] if (
-                cloud_init.get('nic_gateway') is not None or
-                cloud_init.get('nic_netmask') is not None or
-                cloud_init.get('nic_ip_address') is not None or
-                cloud_init.get('nic_boot_protocol') is not None or
-                cloud_init.get('nic_on_boot') is not None
-            ) else None,
+                for nic in cloud_init_nics
+                if (
+                    nic.get('nic_gateway') is not None or
+                    nic.get('nic_netmask') is not None or
+                    nic.get('nic_ip_address') is not None or
+                    nic.get('nic_boot_protocol') is not None or
+                    nic.get('nic_on_boot') is not None
+                )
+            ] if cloud_init_nics else None,
             **cloud_init
         )
     elif sysprep:
@@ -658,6 +734,8 @@ def main():
         id=dict(default=None),
         cluster=dict(default=None),
         template=dict(default=None),
+        template_version=dict(default=None, type='int'),
+        use_latest_template_version=dict(default=None, type='bool'),
         disks=dict(default=[], type='list'),
         memory=dict(default=None),
         memory_guaranteed=dict(default=None),
@@ -688,6 +766,7 @@ def main():
         force=dict(type='bool', default=False),
         nics=dict(default=[], type='list'),
         cloud_init=dict(type='dict'),
+        cloud_init_nics=dict(defaul=[], type='list'),
         sysprep=dict(type='dict'),
         host=dict(default=None),
         clone=dict(type='bool', default=False),
@@ -713,8 +792,10 @@ def main():
 
         control_state(vm, vms_service, module)
         if state == 'present' or state == 'running' or state == 'next_run':
-            cloud_init = module.params['cloud_init']
             sysprep = module.params['sysprep']
+            cloud_init = module.params['cloud_init']
+            cloud_init_nics = module.params['cloud_init_nics']
+            cloud_init_nics.append(cloud_init)
 
             # In case VM don't exist, wait for VM DOWN state,
             # otherwise don't wait for any state, just update VM:
@@ -739,13 +820,13 @@ def main():
                 ),
                 wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                 # Start action kwargs:
-                use_cloud_init=cloud_init is not None,
+                use_cloud_init=cloud_init is not None or len(cloud_init_nics) > 0,
                 use_sysprep=sysprep is not None,
                 vm=otypes.Vm(
                     placement_policy=otypes.VmPlacementPolicy(
                         hosts=[otypes.Host(name=module.params['host'])]
                     ) if module.params['host'] else None,
-                    initialization=_get_initialization(sysprep, cloud_init),
+                    initialization=_get_initialization(sysprep, cloud_init, cloud_init_nics),
                 ),
             )
 

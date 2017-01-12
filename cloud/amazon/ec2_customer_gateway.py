@@ -13,6 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ec2_customer_gateway
@@ -120,6 +124,11 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (boto3_conn, camel_dict_to_snake_dict,
+        ec2_argument_spec, get_aws_connection_info)
+
+
 class Ec2CustomerGatewayManager:
 
     def __init__(self, module):
@@ -130,7 +139,7 @@ class Ec2CustomerGatewayManager:
             if not region:
                 module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
             self.ec2 = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except ClientError, e:
+        except ClientError as e:
             module.fail_json(msg=e.message)
 
     def ensure_cgw_absent(self, gw_id):
@@ -199,7 +208,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
                            required_if=[
-                               ('state', 'present', ['bgp_arn'])
+                               ('state', 'present', ['bgp_asn'])
                            ]
                            )
 
@@ -211,8 +220,6 @@ def main():
 
     gw_mgr = Ec2CustomerGatewayManager(module)
 
-    bgp_asn = module.params.get('bgp_asn')
-    ip_address = module.params.get('ip_address')
     name = module.params.get('name')
 
     existing = gw_mgr.describe_gateways(module.params['ip_address'])
@@ -259,9 +266,6 @@ def main():
     pretty_results = camel_dict_to_snake_dict(results)
     module.exit_json(**pretty_results)
 
-# import module methods
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

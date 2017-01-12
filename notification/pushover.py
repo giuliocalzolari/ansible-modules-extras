@@ -20,6 +20,10 @@
 
 ###
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: pushover
@@ -53,8 +57,11 @@ author: "Jim Richardson (@weaselkeeper)"
 '''
 
 EXAMPLES = '''
-- local_action: pushover msg="{{inventory_hostname}} has exploded in flames,
-  It is now time to panic" app_token=wxfdksl user_key=baa5fe97f2c5ab3ca8f0bb59
+- pushover:
+    msg: '{{ inventory_hostname }} has exploded in flames, It is now time to panic'
+    app_token: wxfdksl
+    user_key: baa5fe97f2c5ab3ca8f0bb59
+  delegate_to: localhost
 '''
 
 import urllib

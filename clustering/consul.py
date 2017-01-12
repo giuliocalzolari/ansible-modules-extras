@@ -17,6 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = """
 module: consul
 short_description: "Add, modify & delete services within a consul cluster."
@@ -185,7 +189,7 @@ EXAMPLES = '''
       service_name: nginx
       service_port: 80
       interval: 60s
-      http: /status
+      http: "http://localhost:80/status"
 
   - name: register external service nginx available at 10.1.5.23
     consul:
@@ -213,13 +217,21 @@ EXAMPLES = '''
       script: "/opt/disk_usage.py"
       interval: 5m
 
+  - name: register an http check against a service that's already registered
+    consul:
+      check_name: nginx-check2
+      check_id: nginx-check2
+      service_id: nginx
+      interval: 60s
+      http: "http://localhost:80/morestatus"
+
 '''
 
 try:
     import consul
     from requests.exceptions import ConnectionError
     python_consul_installed = True
-except ImportError, e:
+except ImportError:
     python_consul_installed = False
 
 def register_with_consul(module):
@@ -265,7 +277,7 @@ def add_check(module, check):
     retrieve the full metadata of an existing check  through the consul api.
     Without this we can't compare to the supplied check and so we must assume
     a change. '''
-    if not check.name:
+    if not check.name and not service_id:
         module.fail_json(msg='a check name is required for a node level check, one not attached to a service')
 
     consul_api = get_consul_api(module)
@@ -278,7 +290,8 @@ def add_check(module, check):
                      interval=check.interval,
                      ttl=check.ttl,
                      http=check.http,
-                     timeout=check.timeout)
+                     timeout=check.timeout,
+                     service_id=check.service_id)
 
 
 def remove_check(module, check_id):
@@ -298,7 +311,7 @@ def add_service(module, service):
     changed = False
 
     consul_api = get_consul_api(module)
-    existing = get_service_by_id(consul_api, service.id)
+    existing = get_service_by_id_or_name(consul_api, service.id)
 
     # there is no way to retrieve the details of checks so if a check is present
     # in the service it must be re-registered
@@ -306,7 +319,7 @@ def add_service(module, service):
 
         service.register(consul_api)
         # check that it registered correctly
-        registered = get_service_by_id(consul_api, service.id)
+        registered = get_service_by_id_or_name(consul_api, service.id)
         if registered:
             result = registered
             changed = True
@@ -322,7 +335,7 @@ def add_service(module, service):
 def remove_service(module, service_id):
     ''' deregister a service from the given agent using its service id '''
     consul_api = get_consul_api(module)
-    service = get_service_by_id(consul_api, service_id)
+    service = get_service_by_id_or_name(consul_api, service_id)
     if service:
         consul_api.agent.service.deregister(service_id)
         module.exit_json(changed=True, id=service_id)
@@ -338,10 +351,10 @@ def get_consul_api(module, token=None):
                          token=module.params.get('token'))
 
 
-def get_service_by_id(consul_api, service_id):
+def get_service_by_id_or_name(consul_api, service_id_or_name):
     ''' iterate the registered services and find one with the given id '''
     for name, service in consul_api.agent.services().iteritems():
-        if service['ID'] == service_id:
+        if service['ID'] == service_id_or_name or service['Service'] == service_id_or_name:
             return ConsulService(loaded=service)
 
 
@@ -363,7 +376,8 @@ def parse_check(module):
             module.params.get('ttl'),
             module.params.get('notes'),
             module.params.get('http'),
-            module.params.get('timeout')
+            module.params.get('timeout'),
+            module.params.get('service_id'),
         )
 
 
@@ -451,10 +465,11 @@ class  ConsulService():
 class ConsulCheck():
 
     def __init__(self, check_id, name, node=None, host='localhost',
-                    script=None, interval=None, ttl=None, notes=None, http=None, timeout=None):
+                    script=None, interval=None, ttl=None, notes=None, http=None, timeout=None, service_id=None):
         self.check_id = self.name = name
         if check_id:
             self.check_id = check_id
+        self.service_id = service_id
         self.notes = notes
         self.node = node
         self.host = host
@@ -488,13 +503,14 @@ class ConsulCheck():
         return duration
 
     def register(self, consul_api):
-        consul_api.agent.check.register(self.name, check_id=self.check_id,
+        consul_api.agent.check.register(self.name, check_id=self.check_id, service_id=self.service_id,
                                         notes=self.notes,
                                         check=self.check)
 
     def __eq__(self, other):
         return (isinstance(other, self.__class__)
                 and self.check_id == other.check_id
+                and self.service_id == other.service_id
                 and self.name == other.name
                 and self.script == script
                 and self.interval == interval)
@@ -514,6 +530,7 @@ class ConsulCheck():
         self._add(data, 'ttl')
         self._add(data, 'http')
         self._add(data, 'timeout')
+        self._add(data, 'service_id')
         return data
 
     def _add(self, data, key, attr=None):
@@ -560,10 +577,10 @@ def main():
 
     try:
         register_with_consul(module)
-    except ConnectionError, e:
+    except ConnectionError as e:
         module.fail_json(msg='Could not connect to consul agent at %s:%s, error was %s' % (
                             module.params.get('host'), module.params.get('port'), str(e)))
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg=str(e))
 
 # import module snippets

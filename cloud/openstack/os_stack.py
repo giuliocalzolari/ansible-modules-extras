@@ -25,6 +25,10 @@ try:
 except ImportError:
     HAS_SHADE = False
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: os_stack
@@ -180,7 +184,8 @@ def _update_stack(module, stack, cloud):
             environment_files=module.params['environment'],
             timeout=module.params['timeout'],
             rollback=module.params['rollback'],
-            wait=module.params['wait'])
+            wait=module.params['wait'],
+            **module.params['parameters'])
 
         if stack['stack_status'] == 'UPDATE_COMPLETE':
             return stack

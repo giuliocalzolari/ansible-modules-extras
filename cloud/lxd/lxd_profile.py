@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: lxd_profile
@@ -105,7 +109,7 @@ EXAMPLES = '''
         name: macvlan
         state: present
         config: {}
-        description: 'my macvlan profile'
+        description: my macvlan profile
         devices:
           eth0:
             nictype: macvlan
@@ -126,7 +130,7 @@ EXAMPLES = '''
       name: macvlan
       state: present
       config: {}
-      description: 'my macvlan profile'
+      description: my macvlan profile
       devices:
         eth0:
           nictype: macvlan

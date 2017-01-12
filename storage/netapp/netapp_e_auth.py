@@ -17,6 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: netapp_e_auth
@@ -73,12 +77,12 @@ EXAMPLES = '''
 - name: Test module
   netapp_e_auth:
     name: trex
-    current_password: 'B4Dpwd'
-    new_password: 'W0rs3P4sswd'
+    current_password: OldPasswd
+    new_password: NewPasswd
     set_admin: yes
-    api_url: "{{ netapp_api_url }}"
-    api_username: "{{ netapp_api_username }}"
-    api_password: "{{ netapp_api_password }}"
+    api_url: '{{ netapp_api_url }}'
+    api_username: '{{ netapp_api_username }}'
+    api_password: '{{ netapp_api_password }}'
 '''
 
 RETURN = '''

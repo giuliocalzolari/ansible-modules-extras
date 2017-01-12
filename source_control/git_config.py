@@ -19,6 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: git_config
@@ -72,30 +76,65 @@ options:
 
 EXAMPLES = '''
 # Set some settings in ~/.gitconfig
-- git_config: name=alias.ci scope=global value=commit
-- git_config: name=alias.st scope=global value=status
+- git_config:
+    name: alias.ci
+    scope: global
+    value: commit
+
+- git_config:
+    name: alias.st
+    scope: global
+    value: status
 
 # Or system-wide:
-- git_config: name=alias.remotev scope=system value="remote -v"
-- git_config: name=core.editor scope=global value=vim
+- git_config:
+    name: alias.remotev
+    scope: system
+    value: remote -v
+
+- git_config:
+    name: core.editor
+    scope: global
+    value: vim
+
 # scope=system is the default
-- git_config: name=alias.diffc value="diff --cached"
-- git_config: name=color.ui value=auto
+- git_config:
+    name: alias.diffc
+    value: diff --cached
+
+- git_config:
+    name: color.ui
+    value: auto
 
 # Make etckeeper not complain when invoked by cron
-- git_config: name=user.email repo=/etc scope=local value="root@{{ ansible_fqdn }}"
+- git_config:
+    name: user.email
+    repo: /etc
+    scope: local
+    value: 'root@{{ ansible_fqdn }}'
 
 # Read individual values from git config
-- git_config: name=alias.ci scope=global
-# scope=system is also assumed when reading values, unless list_all=yes
-- git_config: name=alias.diffc
+- git_config:
+    name: alias.ci
+    scope: global
+
+# scope: system is also assumed when reading values, unless list_all=yes
+- git_config:
+    name: alias.diffc
 
 # Read all values from git config
-- git_config: list_all=yes scope=global
+- git_config:
+    list_all: yes
+    scope: global
+
 # When list_all=yes and no scope is specified, you get configuration from all scopes
-- git_config: list_all=yes
+- git_config:
+    list_all: yes
+
 # Specify a repository to include local settings
-- git_config: list_all=yes repo=/path/to/repo.git
+- git_config:
+    list_all: yes
+    repo: /path/to/repo.git
 '''
 
 RETURN = '''
@@ -158,7 +197,7 @@ def main():
     else:
         new_value = None
 
-    args = [git_path, "config"]
+    args = [git_path, "config", "--includes"]
     if params['list_all']:
         args.append('-l')
     if scope:

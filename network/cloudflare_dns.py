@@ -18,15 +18,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
-import urllib
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -60,6 +54,11 @@ options:
     required: false
     choices: [ 'tcp', 'udp' ]
     default: null
+  proxied:
+    description: Proxy through cloudflare network or just use DNS
+    required: false
+    default: no
+    version_added: "2.3"
   record:
     description:
       - Record to add. Required if C(state=present). Default is C(@) (e.g. the zone name)
@@ -151,6 +150,16 @@ EXAMPLES = '''
     type: CNAME
     value: example.com
     state: absent
+    account_email: test@example.com
+    account_api_token: dummyapitoken
+
+# create a my.com CNAME record to example.com and proxy through cloudflare's network
+- cloudflare_dns:
+    zone: my.com
+    type: CNAME
+    value: example.com
+    state: present
+    proxied: yes
     account_email: test@example.com
     account_api_token: dummyapitoken
 
@@ -269,6 +278,22 @@ record:
             sample: sample.com
 '''
 
+try:
+    import json
+except ImportError:
+    try:
+        import simplejson as json
+    except ImportError:
+        # Let snippet from module_utils/basic.py return a proper error in this case
+        pass
+
+import urllib
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.urls import fetch_url
+
+
 class CloudflareAPI(object):
 
     cf_api_endpoint = 'https://api.cloudflare.com/client/v4'
@@ -281,6 +306,7 @@ class CloudflareAPI(object):
         self.port              = module.params['port']
         self.priority          = module.params['priority']
         self.proto             = module.params['proto']
+        self.proxied           = module.params['proxied']
         self.record            = module.params['record']
         self.service           = module.params['service']
         self.is_solo           = module.params['solo']
@@ -315,8 +341,9 @@ class CloudflareAPI(object):
         if payload:
             try:
                 data = json.dumps(payload)
-            except Exception, e:
-                self.module.fail_json(msg="Failed to encode payload as JSON: {0}".format(e))
+            except Exception:
+                e = get_exception()
+                self.module.fail_json(msg="Failed to encode payload as JSON: %s " % str(e))
 
         resp, info = fetch_url(self.module,
                                self.cf_api_endpoint + api_call,
@@ -486,7 +513,7 @@ class CloudflareAPI(object):
 
     def ensure_dns_record(self,**kwargs):
         params = {}
-        for param in ['port','priority','proto','service','ttl','type','record','value','weight','zone']:
+        for param in ['port','priority','proto','proxied','service','ttl','type','record','value','weight','zone']:
           if param in kwargs:
               params[param] = kwargs[param]
           else:
@@ -515,6 +542,9 @@ class CloudflareAPI(object):
                 "content": params['value'],
                 "ttl": params['ttl']
             }
+
+        if (params['type'] in [ 'A', 'AAAA', 'CNAME' ]):
+            new_record["proxied"] = params["proxied"]
 
         if params['type'] == 'MX':
             for attr in [params['priority'],params['value']]:
@@ -584,6 +614,7 @@ def main():
             port              = dict(required=False, default=None, type='int'),
             priority          = dict(required=False, default=1, type='int'),
             proto             = dict(required=False, default=None, choices=[ 'tcp', 'udp' ], type='str'),
+            proxied           = dict(required=False, default=False, type='bool'),
             record            = dict(required=False, default='@', aliases=['name'], type='str'),
             service           = dict(required=False, default=None, type='str'),
             solo              = dict(required=False, default=None, type='bool'),
@@ -636,9 +667,6 @@ def main():
         changed = cf_api.delete_dns_records(solo=False)
         module.exit_json(changed=changed)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

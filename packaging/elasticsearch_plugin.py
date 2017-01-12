@@ -22,6 +22,10 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: elasticsearch_plugin
@@ -83,13 +87,20 @@ options:
 
 EXAMPLES = '''
 # Install Elasticsearch head plugin
-- elasticsearch_plugin: state=present name="mobz/elasticsearch-head"
+- elasticsearch_plugin:
+    state: present
+    name: mobz/elasticsearch-head
 
 # Install specific version of a plugin
-- elasticsearch_plugin: state=present name="com.github.kzwang/elasticsearch-image" version="1.2.0"
+- elasticsearch_plugin:
+    state: present
+    name: com.github.kzwang/elasticsearch-image
+    version: '1.2.0'
 
 # Uninstall Elasticsearch head plugin
-- elasticsearch_plugin: state=absent name="mobz/elasticsearch-head"
+- elasticsearch_plugin:
+    state: absent
+    name: mobz/elasticsearch-head
 '''
 
 PACKAGE_STATE_MAP = dict(
@@ -129,7 +140,7 @@ def install_plugin(module, plugin_bin, plugin_name, version, url, proxy_host, pr
     cmd_args = [plugin_bin, PACKAGE_STATE_MAP["present"], plugin_name]
 
     if version:
-        name = name + '/' + version
+        plugin_name = plugin_name + '/' + version
 
     if proxy_host and proxy_port:
         cmd_args.append("-DproxyHost=%s -DproxyPort=%s" % (proxy_host, proxy_port))
@@ -142,7 +153,10 @@ def install_plugin(module, plugin_bin, plugin_name, version, url, proxy_host, pr
 
     cmd = " ".join(cmd_args)
 
-    rc, out, err = module.run_command(cmd)
+    if module.check_mode:
+        rc, out, err = 0, "check mode", ""
+    else:
+        rc, out, err = module.run_command(cmd)
 
     if rc != 0:
         reason = parse_error(out)
@@ -155,7 +169,10 @@ def remove_plugin(module, plugin_bin, plugin_name):
 
     cmd = " ".join(cmd_args)
 
-    rc, out, err = module.run_command(cmd)
+    if module.check_mode:
+        rc, out, err = 0, "check mode", ""
+    else:
+        rc, out, err = module.run_command(cmd)
 
     if rc != 0:
         reason = parse_error(out)
@@ -175,7 +192,8 @@ def main():
             proxy_host=dict(default=None),
             proxy_port=dict(default=None),
             version=dict(default=None)
-        )
+        ),
+        supports_check_mode=True
     )
 
     name        = module.params["name"]

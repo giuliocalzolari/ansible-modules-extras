@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: cs_zone_facts
@@ -35,11 +39,12 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-- local_action:
-    module: cs_zone_facts
+- cs_zone_facts:
     name: ch-gva-1
+  delegate_to: localhost
 
-- debug: var=cloudstack_zone
+- debug:
+    var: cloudstack_zone
 '''
 
 RETURN = '''

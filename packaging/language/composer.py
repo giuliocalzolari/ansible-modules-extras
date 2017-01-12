@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: composer
@@ -108,19 +112,21 @@ notes:
 
 EXAMPLES = '''
 # Downloads and installs all the libs and dependencies outlined in the /path/to/project/composer.lock
-- composer: command=install working_dir=/path/to/project
+- composer:
+    command: install
+    working_dir: /path/to/project
 
 - composer:
-    command: "require"
-    arguments: "my/package"
-    working_dir: "/path/to/project"
+    command: require
+    arguments: my/package
+    working_dir: /path/to/project
 
 # Clone project and install with all dependencies
 - composer:
-    command: "create-project"
-    arguments: "package/package /path/to/project ~1.0"
-    working_dir: "/path/to/project"
-    prefer_dist: "yes"
+    command: create-project
+    arguments: package/package /path/to/project ~1.0
+    working_dir: /path/to/project
+    prefer_dist: yes
 '''
 
 import os

@@ -20,6 +20,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: homebrew
@@ -76,30 +80,60 @@ notes:  []
 '''
 EXAMPLES = '''
 # Install formula foo with 'brew' in default path (C(/usr/local/bin))
-- homebrew: name=foo state=present
+- homebrew:
+    name: foo
+    state: present
 
 # Install formula foo with 'brew' in alternate path C(/my/other/location/bin)
-- homebrew: name=foo path=/my/other/location/bin state=present
+- homebrew:
+    name: foo
+    path: /my/other/location/bin
+    state: present
 
 # Update homebrew first and install formula foo with 'brew' in default path
-- homebrew: name=foo state=present update_homebrew=yes
+- homebrew:
+    name: foo
+    state: present
+    update_homebrew: yes
 
 # Update homebrew first and upgrade formula foo to latest available with 'brew' in default path
-- homebrew: name=foo state=latest update_homebrew=yes
+- homebrew:
+    name: foo
+    state: latest
+    update_homebrew: yes
 
 # Update homebrew and upgrade all packages
-- homebrew: update_homebrew=yes upgrade_all=yes
+- homebrew:
+    update_homebrew: yes
+    upgrade_all: yes
 
 # Miscellaneous other examples
-- homebrew: name=foo state=head
-- homebrew: name=foo state=linked
-- homebrew: name=foo state=absent
-- homebrew: name=foo,bar state=absent
-- homebrew: name=foo state=present install_options=with-baz,enable-debug
+- homebrew:
+    name: foo
+    state: head
+
+- homebrew:
+    name: foo
+    state: linked
+
+- homebrew:
+    name: foo
+    state: absent
+
+- homebrew:
+    name: foo,bar
+    state: absent
+
+- homebrew:
+    name: foo
+    state: present
+    install_options: with-baz,enable-debug
 '''
 
 import os.path
 import re
+
+from ansible.module_utils.six import iteritems
 
 
 # exceptions -------------------------------------------------------------- {{{
@@ -348,7 +382,7 @@ class Homebrew(object):
         self.message = ''
 
     def _setup_instance_vars(self, **kwargs):
-        for key, val in kwargs.iteritems():
+        for key, val in iteritems(kwargs):
             setattr(self, key, val)
 
     def _prep(self):

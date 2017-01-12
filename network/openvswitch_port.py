@@ -22,6 +22,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: openvswitch_port
@@ -72,25 +76,38 @@ options:
 
 EXAMPLES = '''
 # Creates port eth2 on bridge br-ex
-- openvswitch_port: bridge=br-ex port=eth2 state=present
+- openvswitch_port:
+    bridge: br-ex
+    port: eth2
+    state: present
 
-# Creates port eth6 and set ofport equal to 6.
-- openvswitch_port: bridge=bridge-loop port=eth6 state=present
-                    set="Interface eth6 ofport_request=6"
+# Creates port eth6 
+- openvswitch_port:
+    bridge: bridge-loop
+    port: eth6
+    state: present
+    set: Interface eth6
 
 # Creates port vlan10 with tag 10 on bridge br-ex
-- openvswitch_port: bridge=br-ex port=vlan10 tag=10 state=present
-                    set="Interface vlan10 type=internal"
+- openvswitch_port:
+    bridge: br-ex
+    port: vlan10
+    tag: 10
+    state: present
+    set: Interface vlan10
 
 # Assign interface id server1-vifeth6 and mac address 00:00:5E:00:53:23
 # to port vifeth6 and setup port to be managed by a controller.
-- openvswitch_port: bridge=br-int port=vifeth6 state=present
+- openvswitch_port:
+    bridge: br-int
+    port: vifeth6
+    state: present
   args:
     external_ids:
-      iface-id: "{{inventory_hostname}}-vifeth6"
-      attached-mac: "00:00:5E:00:53:23"
-      vm-id: "{{inventory_hostname}}"
-      iface-status: "active"
+      iface-id: '{{ inventory_hostname }}-vifeth6'
+      attached-mac: '00:00:5E:00:53:23'
+      vm-id: '{{ inventory_hostname }}'
+      iface-status: active
 '''
 
 # pylint: disable=W0703
@@ -146,7 +163,7 @@ class OVSPort(object):
         if rtc != 0:
             self.module.fail_json(msg=err)
 
-        return any(port.rstrip() == self.port for port in out.split('\n'))
+        return any(port.rstrip() == self.port for port in out.split('\n')) or self.port == self.bridge
 
     def set(self, set_opt):
         """ Set attributes on a port. """
@@ -204,7 +221,8 @@ class OVSPort(object):
                 changed = True
             else:
                 changed = False
-        except Exception, earg:
+        except Exception:
+            earg = get_exception()
             self.module.fail_json(msg=str(earg))
         self.module.exit_json(changed=changed)
 
@@ -235,7 +253,8 @@ class OVSPort(object):
                         external_id = fmt_opt % (self.port, key, value)
                         changed = self.set(external_id) or changed
                 ##
-        except Exception, earg:
+        except Exception:
+            earg = get_exception()
             self.module.fail_json(msg=str(earg))
         self.module.exit_json(changed=changed)
 
@@ -269,4 +288,7 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+from ansible.module_utils.pycompat24 import get_exception
+
+if __name__ == '__main__':
+    main()

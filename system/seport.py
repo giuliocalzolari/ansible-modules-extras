@@ -17,6 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: seport
@@ -61,11 +65,25 @@ author: Dan Keder
 
 EXAMPLES = '''
 # Allow Apache to listen on tcp port 8888
-- seport: ports=8888 proto=tcp setype=http_port_t state=present
+- seport:
+    ports: 8888
+    proto: tcp
+    setype: http_port_t
+    state: present
+
 # Allow sshd to listen on tcp port 8991
-- seport: ports=8991 proto=tcp setype=ssh_port_t state=present
+- seport:
+    ports: 8991
+    proto: tcp
+    setype: ssh_port_t
+    state: present
+
 # Allow memcached to listen on tcp ports 10000-10100 and 10112
-- seport: ports=10000-10100,10112 proto=tcp setype=memcache_port_t state=present
+- seport:
+    ports: 10000-10100,10112
+    proto: tcp
+    setype: memcache_port_t
+    state: present
 '''
 
 try:
@@ -302,4 +320,5 @@ def main():
     module.exit_json(**result)
 
 
-main()
+if __name__ == '__main__':
+    main()

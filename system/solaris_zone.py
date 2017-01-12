@@ -22,6 +22,10 @@ import os
 import platform
 import tempfile
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: solaris_zone
@@ -104,31 +108,55 @@ options:
 
 EXAMPLES = '''
 # Create and install a zone, but don't boot it
-solaris_zone: name=zone1 state=present path=/zones/zone1 sparse=true root_password="Be9oX7OSwWoU."
-      config='set autoboot=true; add net; set physical=bge0; set address=10.1.1.1; end'
+- solaris_zone:
+    name: zone1
+    state: present
+    path: /zones/zone1
+    sparse: true
+    root_password: Be9oX7OSwWoU.
+    config: 'set autoboot=true; add net; set physical=bge0; set address=10.1.1.1; end'
 
 # Create and install a zone and boot it
-solaris_zone: name=zone1 state=running path=/zones/zone1 root_password="Be9oX7OSwWoU."
-      config='set autoboot=true; add net; set physical=bge0; set address=10.1.1.1; end'
+- solaris_zone:
+    name: zone1
+    state: running
+    path: /zones/zone1
+    root_password: Be9oX7OSwWoU.
+    config: 'set autoboot=true; add net; set physical=bge0; set address=10.1.1.1; end'
 
 # Boot an already installed zone
-solaris_zone: name=zone1 state=running
+- solaris_zone:
+    name: zone1
+    state: running
 
 # Stop a zone
-solaris_zone: name=zone1 state=stopped
+- solaris_zone:
+    name: zone1
+    state: stopped
 
 # Destroy a zone
-solaris_zone: name=zone1 state=absent
+- solaris_zone:
+    name: zone1
+    state: absent
 
 # Detach a zone
-solaris_zone: name=zone1 state=detached
+- solaris_zone:
+    name: zone1
+    state: detached
 
 # Configure a zone, ready to be attached
-solaris_zone: name=zone1 state=configured path=/zones/zone1 root_password="Be9oX7OSwWoU."
-      config='set autoboot=true; add net; set physical=bge0; set address=10.1.1.1; end'
+- solaris_zone:
+    name: zone1
+    state: configured
+    path: /zones/zone1
+    root_password: Be9oX7OSwWoU.
+    config: 'set autoboot=true; add net; set physical=bge0; set address=10.1.1.1; end'
 
 # Attach a zone
-solaris_zone: name=zone1 state=attached attach_options='-u'
+- solaris_zone:
+    name: zone1
+    state: attached
+    attach_options=: -u
 '''
 
 class Zone(object):
@@ -453,4 +481,6 @@ def main():
     module.exit_json(changed=zone.changed, msg=', '.join(zone.msg))
 
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

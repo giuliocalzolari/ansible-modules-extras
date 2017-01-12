@@ -15,6 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: campfire
@@ -60,10 +64,18 @@ author: "Adam Garside (@fabulops)"
 '''
 
 EXAMPLES = '''
-- campfire: subscription=foo token=12345 room=123 msg="Task completed."
+- campfire:
+    subscription: foo
+    token: 12345
+    room: 123
+    msg: Task completed.
 
-- campfire: subscription=foo token=12345 room=123 notify=loggins
-        msg="Task completed ... with feeling."
+- campfire:
+    subscription: foo
+    token: 12345
+    room: 123
+    notify: loggins
+    msg: Task completed ... with feeling.
 '''
 
 import cgi

@@ -23,6 +23,10 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: win_acl
@@ -30,6 +34,7 @@ version_added: "2.0"
 short_description: Set file/directory permissions for a system user or group.
 description:
      - Add or remove rights/permissions for a given user or group for the specified src file or folder.
+     - If adding ACL's for AppPool identities (available since 2.3), the Windows "Feature Web-Scripting-Tools" must be enabled
 options:
   path:
     description:

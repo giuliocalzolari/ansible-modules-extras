@@ -26,6 +26,10 @@
 # This module is based on the crontab module.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = """
 ---
 module: cronvar
@@ -89,15 +93,22 @@ author: "Doug Luce (@dougluce)"
 EXAMPLES = '''
 # Ensure a variable exists.
 # Creates an entry like "EMAIL=doug@ansibmod.con.com"
-- cronvar: name="EMAIL" value="doug@ansibmod.con.com"
+- cronvar:
+    name: EMAIL
+    value: doug@ansibmod.con.com
 
 # Make sure a variable is gone.  This will remove any variable named
 # "LEGACY"
-- cronvar: name="LEGACY" state=absent
+- cronvar:
+    name: LEGACY
+    state: absent
 
 # Adds a variable to a file under /etc/cron.d
-- cronvar: name="LOGFILE" value="/var/log/yum-autoupdate.log"
-        user="root" cron_file=ansible_yum-autoupdate
+- cronvar:
+    name: LOGFILE
+    value: /var/log/yum-autoupdate.log
+    user: root
+    cron_file: ansible_yum-autoupdate
 '''
 
 import os
@@ -430,4 +441,5 @@ def main():
     module.exit_json(msg="Unable to execute cronvar task.")
 
 
-main()
+if __name__ == '__main__':
+    main()

@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 
 module: statusio_maintenance
@@ -152,7 +156,7 @@ automation to stop the maintenance.
     title: "Routine maintenance"
     desc: "Some security updates"
     components:
-      - "server1.example.com
+      - "server1.example.com"
       - "server2.example.com"
     minutes: "60"
     api_id: "api_id"

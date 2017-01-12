@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: execute_lambda
@@ -108,7 +112,9 @@ EXAMPLES = '''
   register: response
   # the response will have a `logs` key that will contain a log (up to 4KB) of the function execution in Lambda.
 
-- execute_lambda: name=test-function version_qualifier=PRODUCTION
+- execute_lambda:
+    name: test-function
+    version_qualifier: PRODUCTION
 '''
 
 RETURN = '''

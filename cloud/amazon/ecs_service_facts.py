@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ecs_service_facts
@@ -139,6 +143,10 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+
+
 class EcsServiceManager:
     """Handles ECS Services"""
 
@@ -151,8 +159,8 @@ class EcsServiceManager:
             if not region:
                 module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
             self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound, e:
-            self.module.fail_json(msg="Can't authorize connection - "+str(e))
+        except boto.exception.NoAuthHandlerFound as e:
+            self.module.fail_json(msg="Can't authorize connection - %s" % str(e))
 
     # def list_clusters(self):
     #   return self.client.list_clusters()
@@ -227,10 +235,6 @@ def main():
     ecs_facts_result = dict(changed=False, ansible_facts=ecs_facts)
     module.exit_json(**ecs_facts_result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

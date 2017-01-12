@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: redis
@@ -103,22 +107,38 @@ author: "Xabier Larrakoetxea (@slok)"
 
 EXAMPLES = '''
 # Set local redis instance to be slave of melee.island on port 6377
-- redis: command=slave master_host=melee.island master_port=6377
+- redis:
+    command: slave
+    master_host: melee.island
+    master_port: 6377
 
 # Deactivate slave mode
-- redis: command=slave slave_mode=master
+- redis:
+    command: slave
+    slave_mode: master
 
 # Flush all the redis db
-- redis: command=flush flush_mode=all
+- redis:
+    command: flush
+    flush_mode: all
 
 # Flush only one db in a redis instance
-- redis: command=flush db=1 flush_mode=db
+- redis:
+    command: flush
+    db: 1
+    flush_mode: db
 
 # Configure local redis to have 10000 max clients
-- redis: command=config name=maxclients value=10000
+- redis:
+    command: config
+    name: maxclients
+    value: 10000
 
 # Configure local redis to have lua time limit of 100 ms
-- redis: command=config name=lua-time-limit value=100
+- redis:
+    command: config
+    name: lua-time-limit
+    value: 100
 '''
 
 try:
@@ -149,7 +169,7 @@ def set_master_mode(client):
 
 def flush(client, db=None):
     try:
-        if type(db) != int:
+        if not isinstance(db, int):
             return client.flushall()
         else:
             # The passed client has been connected to the database already
@@ -210,7 +230,8 @@ def main():
                               password=login_password)
         try:
             r.ping()
-        except Exception, e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg="unable to connect to database: %s" % e)
 
         #Check if we are already in the mode that we want
@@ -269,7 +290,8 @@ def main():
                               db=db)
         try:
             r.ping()
-        except Exception, e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg="unable to connect to database: %s" % e)
 
         # Do the stuff
@@ -296,13 +318,15 @@ def main():
 
         try:
             r.ping()
-        except Exception, e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg="unable to connect to database: %s" % e)
 
         
         try:
             old_value = r.config_get(name)[name]
-        except Exception, e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg="unable to read config: %s" % e)
         changed = old_value != value
 
@@ -311,7 +335,8 @@ def main():
         else:
             try:
                 r.config_set(name, value)
-            except Exception, e:
+            except Exception:
+                e = get_exception()
                 module.fail_json(msg="unable to write config: %s" % e)
             module.exit_json(changed=changed, name=name, value=value)
     else:
@@ -319,4 +344,7 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+from ansible.module_utils.pycompat24 import get_exception
+
+if __name__ == '__main__':
+    main()

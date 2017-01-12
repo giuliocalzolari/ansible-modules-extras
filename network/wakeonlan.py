@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: wakeonlan
@@ -54,9 +58,14 @@ notes:
 
 EXAMPLES = '''
 # Send a magic Wake-on-LAN packet to 00:00:5E:00:53:66
-- local_action: wakeonlan mac=00:00:5E:00:53:66 broadcast=192.0.2.23
+- wakeonlan:
+    mac: '00:00:5E:00:53:66'
+    broadcast: 192.0.2.23
+  delegate_to: loclahost
 
-- wakeonlan: mac=00:00:5E:00:53:66 port=9
+- wakeonlan:
+    mac: 00:00:5E:00:53:66
+    port: 9
   delegate_to: localhost
 '''
 

@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = """
 module: hall
 short_description: Send notification to Hall
@@ -60,7 +64,7 @@ EXAMPLES = """
     room_token: <hall room integration token>
     title: Server Creation
     msg: "Created EC2 instance {{ item.id }} of type {{ item.instance_type }}.\\nInstance can be reached at {{ item.public_ip }} in the {{ item.region }} region."
-  with_items: ec2.instances
+  with_items: "{{ ec2.instances }}"
 """
 
 HALL_API_ENDPOINT  = 'https://hall.com/api/1/services/generic/%s'
@@ -94,4 +98,6 @@ def main():
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
-main()
+
+if __name__ == '__main__':
+    main()

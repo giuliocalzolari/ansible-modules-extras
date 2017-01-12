@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: sensu_check
@@ -170,21 +174,30 @@ EXAMPLES = '''
 # Fetch metrics about the CPU load every 60 seconds,
 # the sensu server has a handler called 'relay' which forwards stats to graphite
 - name: get cpu metrics
-  sensu_check: name=cpu_load
-               command=/etc/sensu/plugins/system/cpu-mpstat-metrics.rb
-               metric=yes handlers=relay subscribers=common interval=60
+  sensu_check:
+    name: cpu_load
+    command: /etc/sensu/plugins/system/cpu-mpstat-metrics.rb
+    metric: yes
+    handlers: relay
+    subscribers: common
+    interval: 60
 
 # Check whether nginx is running
 - name: check nginx process
-  sensu_check: name=nginx_running
-               command='/etc/sensu/plugins/processes/check-procs.rb -f /var/run/nginx.pid'
-               handlers=default subscribers=nginx interval=60
+  sensu_check:
+    name: nginx_running
+    command: /etc/sensu/plugins/processes/check-procs.rb -f /var/run/nginx.pid
+    handlers: default
+    subscribers: nginx
+    interval: 60
 
 # Stop monitoring the disk capacity.
 # Note that the check will still show up in the sensu dashboard,
 # to remove it completely you need to issue a DELETE request to the sensu api.
 - name: check disk
-  sensu_check: name=check_disk_capacity state=absent
+  sensu_check:
+    name: check_disk_capacity
+    state: absent
 '''
 
 try:
@@ -206,7 +219,8 @@ def sensu_check(module, path, name, state='present', backup=False):
         try:
             stream = open(path, 'r')
             config = json.load(stream)
-        except IOError, e:
+        except IOError:
+            e = get_exception()
             if e.errno is 2:  # File not found, non-fatal
                 if state == 'absent':
                     reasons.append('file did not exist and state is `absent\'')
@@ -327,7 +341,8 @@ def sensu_check(module, path, name, state='present', backup=False):
             try:
                 stream = open(path, 'w')
                 stream.write(json.dumps(config, indent=2) + '\n')
-            except IOError, e:
+            except IOError:
+                e = get_exception()
                 module.fail_json(msg=str(e))
         finally:
             if stream:
@@ -381,4 +396,7 @@ def main():
     module.exit_json(path=path, changed=changed, msg='OK', name=name, reasons=reasons)
 
 from ansible.module_utils.basic import *
-main()
+from ansible.module_utils.pycompat24 import get_exception
+
+if __name__ == '__main__':
+    main()

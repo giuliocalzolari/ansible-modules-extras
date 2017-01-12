@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: rabbitmq_binding
@@ -94,10 +98,18 @@ options:
 
 EXAMPLES = '''
 # Bind myQueue to directExchange with routing key info
-- rabbitmq_binding: name=directExchange destination=myQueue type=queue routing_key=info
+- rabbitmq_binding:
+    name: directExchange
+    destination: myQueue
+    type: queue
+    routing_key: info
 
 # Bind directExchange to topicExchange with routing key *.info
-- rabbitmq_binding: name=topicExchange destination=topicExchange type=exchange routing_key="*.info"
+- rabbitmq_binding:
+    name: topicExchange
+    destination: topicExchange
+    type: exchange
+    routing_key: *.info
 '''
 
 import requests
@@ -216,4 +228,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

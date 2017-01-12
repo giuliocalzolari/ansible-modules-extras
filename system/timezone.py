@@ -24,6 +24,10 @@ from ansible.module_utils.basic import AnsibleModule, get_platform
 from ansible.module_utils.six import iteritems
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'committer',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: timezone
@@ -71,7 +75,8 @@ diff:
 
 EXAMPLES = '''
 - name: set timezone to Asia/Tokyo
-  timezone: name=Asia/Tokyo
+  timezone:
+    name: Asia/Tokyo
 '''
 
 
@@ -218,6 +223,12 @@ class Timezone(object):
         """
         self.abort('set(key, value) is not implemented on target platform')
 
+    def _verify_timezone(self):
+        tz = self.value['name']['planned']
+        tzfile = '/usr/share/zoneinfo/%s' % tz
+        if not os.path.isfile(tzfile):
+            self.abort('given timezone "%s" is not available' % tz)
+
 
 class SystemdTimezone(Timezone):
     """This is a Timezone manipulation class systemd-powered Linux.
@@ -241,10 +252,7 @@ class SystemdTimezone(Timezone):
         self.status = dict()
         # Validate given timezone
         if 'name' in self.value:
-            tz = self.value['name']['planned']
-            tzfile = '/usr/share/zoneinfo/%s' % tz
-            if not os.path.isfile(tzfile):
-                self.abort('given timezone "%s" is not available' % tz)
+            self._verify_timezone()
 
     def _get_status(self, phase):
         if phase not in self.status:
@@ -298,10 +306,7 @@ class NosystemdTimezone(Timezone):
         super(NosystemdTimezone, self).__init__(module)
         # Validate given timezone
         if 'name' in self.value:
-            tz = self.value['name']['planned']
-            tzfile = '/usr/share/zoneinfo/%s' % tz
-            if not os.path.isfile(tzfile):
-                self.abort('given timezone "%s" is not available' % tz)
+            self._verify_timezone()
             self.update_timezone  = self.module.get_bin_path('cp', required=True)
             self.update_timezone += ' %s /etc/localtime' % tzfile
         self.update_hwclock = self.module.get_bin_path('hwclock', required=True)
@@ -310,8 +315,8 @@ class NosystemdTimezone(Timezone):
             # Debian/Ubuntu
             self.update_timezone       = self.module.get_bin_path('dpkg-reconfigure', required=True)
             self.update_timezone      += ' --frontend noninteractive tzdata'
-            self.conf_files['name']    = '/etc/timezone',
-            self.conf_files['hwclock'] = '/etc/default/rcS',
+            self.conf_files['name']    = '/etc/timezone'
+            self.conf_files['hwclock'] = '/etc/default/rcS'
             self.regexps['name']       = re.compile(r'^([^\s]+)', re.MULTILINE)
             self.tzline_format         = '%s\n'
         else:

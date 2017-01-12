@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: virt_pool
@@ -79,56 +83,81 @@ requirements:
 
 EXAMPLES = '''
 # Define a new storage pool
-- virt_pool: command=define name=vms xml='{{ lookup("template", "pool/dir.xml.j2") }}'
+- virt_pool:
+    command: define
+    name: vms
+    xml: '{{ lookup("template", "pool/dir.xml.j2") }}'
 
 # Build a storage pool if it does not exist
-- virt_pool: command=build name=vms
+- virt_pool:
+    command: build
+    name: vms
 
 # Start a storage pool
-- virt_pool: command=create name=vms
+- virt_pool:
+    command: create
+    name: vms
 
 # List available pools
-- virt_pool: command=list_pools
+- virt_pool:
+    command: list_pools
 
 # Get XML data of a specified pool
-- virt_pool: command=get_xml name=vms
+- virt_pool:
+    command: get_xml
+    name: vms
 
 # Stop a storage pool
-- virt_pool: command=destroy name=vms
+- virt_pool:
+    command: destroy
+    name: vms
 
 # Delete a storage pool (destroys contents)
-- virt_pool: command=delete name=vms
+- virt_pool:
+    command: delete
+    name: vms
 
 # Undefine a storage pool
-- virt_pool: command=undefine name=vms
+- virt_pool:
+    command: undefine
+    name: vms
 
 # Gather facts about storage pools
 # Facts will be available as 'ansible_libvirt_pools'
-- virt_pool: command=facts
+- virt_pool:
+    command: facts
 
 # Gather information about pools managed by 'libvirt' remotely using uri
-- virt_pool: command=info uri='{{ item }}'
-  with_items: libvirt_uris
+- virt_pool:
+    command: info
+    uri: '{{ item }}'
+  with_items: '{{ libvirt_uris }}'
   register: storage_pools
 
 # Ensure that a pool is active (needs to be defined and built first)
-- virt_pool: state=active name=vms
+- virt_pool:
+    state: active
+    name: vms
 
 # Ensure that a pool is inactive
-- virt_pool: state=inactive name=vms
+- virt_pool:
+    state: inactive
+    name: vms
 
 # Ensure that a given pool will be started at boot
-- virt_pool: autostart=yes name=vms
+- virt_pool:
+    autostart: yes
+    name: vms
 
 # Disable autostart for a given pool
-- virt_pool: autostart=no name=vms
+- virt_pool:
+    autostart: no
+    name: vms
 '''
 
 VIRT_FAILED = 1
 VIRT_SUCCESS = 0
 VIRT_UNAVAILABLE=2
-
-import sys
 
 try:
     import libvirt
@@ -143,6 +172,9 @@ except ImportError:
     HAS_XML = False
 else:
     HAS_XML = True
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 ALL_COMMANDS = []
 ENTRY_COMMANDS = ['create', 'status', 'start', 'stop', 'build', 'delete',
@@ -389,7 +421,7 @@ class LibvirtConnection(object):
             return self.conn.storagePoolDefineXML(xml)
         else:
             try:
-                state = self.find_entry(entryid)
+                self.find_entry(entryid)
             except:
                 return self.module.exit_json(changed=True)
 
@@ -499,23 +531,23 @@ class VirtStoragePool(object):
 
                 try:
                     results[entry]["host"] = self.conn.get_host(entry)
-                except ValueError as e:
+                except ValueError:
                     pass
 
                 try:
                     results[entry]["source_path"] = self.conn.get_source_path(entry)
-                except ValueError as e:
+                except ValueError:
                     pass
 
                 try:
                     results[entry]["format"] = self.conn.get_format(entry)
-                except ValueError as e:
+                except ValueError:
                     pass
 
                 try:
                     devices = self.conn.get_devices(entry)
                     results[entry]["devices"] = devices
-                except ValueError as e:
+                except ValueError:
                     pass
 
             else:
@@ -545,7 +577,7 @@ def core(module):
 
     if state and command == 'list_pools':
         res = v.list_pools(state=state)
-        if type(res) != dict:
+        if not isinstance(res, dict):
             res = { command: res }
         return VIRT_SUCCESS, res
 
@@ -607,27 +639,27 @@ def core(module):
                 return VIRT_SUCCESS, res
             elif command == 'build':
                 res = v.build(name, mode)
-                if type(res) != dict:
+                if not isinstance(res, dict):
                     res = { 'changed': True, command: res }
                 return VIRT_SUCCESS, res
             elif command == 'delete':
                 res = v.delete(name, mode)
-                if type(res) != dict:
+                if not isinstance(res, dict):
                     res = { 'changed': True, command: res }
                 return VIRT_SUCCESS, res
             res = getattr(v, command)(name)
-            if type(res) != dict:
+            if not isinstance(res, dict):
                 res = { command: res }
             return VIRT_SUCCESS, res
 
         elif hasattr(v, command):
             res = getattr(v, command)()
-            if type(res) != dict:
+            if not isinstance(res, dict):
                 res = { command: res }
             return VIRT_SUCCESS, res
 
         else:
-            module.fail_json(msg="Command %s not recognized" % basecmd)
+            module.fail_json(msg="Command %s not recognized" % command)
 
     if autostart is not None:
         if not name:
@@ -676,7 +708,7 @@ def main():
     rc = VIRT_SUCCESS
     try:
         rc, result = core(module)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg=str(e))
 
     if rc != 0: # something went wrong emit the msg
@@ -685,6 +717,5 @@ def main():
         module.exit_json(**result)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()

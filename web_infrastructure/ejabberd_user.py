@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ejabberd_user
@@ -59,14 +63,19 @@ notes:
 EXAMPLES = '''
 Example playbook entries using the ejabberd_user module to manage users state.
 
-    tasks:
+- name: create a user if it does not exists
+  ejabberd_user:
+    username: test
+    host: server
+    password: password
 
-    - name: create a user if it does not exists
-      action: ejabberd_user username=test host=server password=password
-
-    - name: delete a user if it exists
-      action: ejabberd_user username=test host=server state=absent
+- name: delete a user if it exists
+  ejabberd_user:
+    username: test
+    host: server
+    state: absent
 '''
+
 import syslog
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.basic import *
@@ -216,4 +225,5 @@ def main():
     module.exit_json(**result)
 
 
-main()
+if __name__ == '__main__':
+    main()

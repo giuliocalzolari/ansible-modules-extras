@@ -24,6 +24,10 @@ except ImportError:
 from ansible.module_utils.basic import *
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ipmi_boot
@@ -110,9 +114,19 @@ uefimode:
 
 EXAMPLES = '''
 # Ensure bootdevice is HD.
-- ipmi_boot: name="test.testdomain.com" user="admin" password="password" bootdev="hd"
+- ipmi_boot:
+    name: test.testdomain.com
+    user: admin
+    password: password
+    bootdev: hd
+
 # Ensure bootdevice is not Network
-- ipmi_boot: name="test.testdomain.com" user="admin" password="password" bootdev="network" state=absent
+- ipmi_boot:
+    name: test.testdomain.com
+    user: admin
+    password: password
+    bootdev: network
+    state: absent
 '''
 
 # ==================================================

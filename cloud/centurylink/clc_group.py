@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 module: clc_group
 short_description: Create/delete Server Groups at Centurylink Cloud
@@ -83,13 +87,14 @@ EXAMPLES = '''
   tasks:
     - name: Create / Verify a Server Group at CenturyLink Cloud
       clc_group:
-        name: 'My Cool Server Group'
-        parent: 'Default Group'
+        name: My Cool Server Group
+        parent: Default Group
         state: present
       register: clc
 
     - name: debug
-      debug: var=clc
+      debug:
+        var: clc
 
 # Delete a Server Group
 
@@ -101,14 +106,14 @@ EXAMPLES = '''
   tasks:
     - name: Delete / Verify Absent a Server Group at CenturyLink Cloud
       clc_group:
-        name: 'My Cool Server Group'
-        parent: 'Default Group'
+        name: My Cool Server Group
+        parent: Default Group
         state: absent
       register: clc
 
     - name: debug
-      debug: var=clc
-
+      debug:
+        var: clc
 '''
 
 RETURN = '''
@@ -212,6 +217,7 @@ group:
 
 __version__ = '${version}'
 
+import os
 from distutils.version import LooseVersion
 
 try:
@@ -233,6 +239,8 @@ except ImportError:
     clc_sdk = None
 else:
     CLC_FOUND = True
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 class ClcGroup(object):
@@ -362,7 +370,7 @@ class ClcGroup(object):
         group, parent = self.group_dict.get(group_name)
         try:
             response = group.Delete()
-        except CLCException, ex:
+        except CLCException as ex:
             self.module.fail_json(msg='Failed to delete group :{0}. {1}'.format(
                 group_name, ex.response_text
             ))
@@ -423,7 +431,7 @@ class ClcGroup(object):
         (parent, grandparent) = self.group_dict[parent]
         try:
             response = parent.Create(name=group, description=description)
-        except CLCException, ex:
+        except CLCException as ex:
             self.module.fail_json(msg='Failed to create group :{0}. {1}'.format(
                 group, ex.response_text))
         return response
@@ -508,6 +516,6 @@ def main():
     clc_group = ClcGroup(module)
     clc_group.process_request()
 
-from ansible.module_utils.basic import *  # pylint: disable=W0614
+
 if __name__ == '__main__':
     main()

@@ -15,6 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: typetalk
@@ -44,7 +48,11 @@ author: "Takashi Someda (@tksmd)"
 '''
 
 EXAMPLES = '''
-- typetalk: client_id=12345 client_secret=12345 topic=1 msg="install completed"
+- typetalk:
+    client_id: 12345
+    client_secret: 12345
+    topic: 1
+    msg: install completed
 '''
 
 import urllib

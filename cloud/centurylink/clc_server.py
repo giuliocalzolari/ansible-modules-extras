@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 module: clc_server
 short_description: Create, Delete, Start and Stop servers in CenturyLink Cloud.
@@ -249,7 +253,7 @@ EXAMPLES = '''
     name: test
     template: ubuntu-14-64
     count: 1
-    group: 'Default Group'
+    group: Default Group
     state: present
 
 - name: Ensure 'Default Group' has exactly 5 servers
@@ -257,22 +261,25 @@ EXAMPLES = '''
     name: test
     template: ubuntu-14-64
     exact_count: 5
-    count_group: 'Default Group'
-    group: 'Default Group'
+    count_group: Default Group
+    group: Default Group
 
 - name: Stop a Server
   clc_server:
-    server_ids: ['UC1ACCT-TEST01']
+    server_ids:
+      - UC1ACCT-TEST01
     state: stopped
 
 - name: Start a Server
   clc_server:
-    server_ids: ['UC1ACCT-TEST01']
+    server_ids:
+      - UC1ACCT-TEST01
     state: started
 
 - name: Delete a Server
   clc_server:
-    server_ids: ['UC1ACCT-TEST01']
+    server_ids:
+      - UC1ACCT-TEST01
     state: absent
 '''
 

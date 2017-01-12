@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: gce_tag
@@ -100,6 +104,9 @@ try:
 except ImportError:
     HAS_LIBCLOUD = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gce import gce_connect
+
 
 def add_tags(gce, module, instance_name, tags):
     """Add tags to instance."""
@@ -117,7 +124,7 @@ def add_tags(gce, module, instance_name, tags):
         node = gce.ex_get_node(instance_name, zone=zone)
     except ResourceNotFoundError:
         module.fail_json(msg='Instance %s not found in zone %s' % (instance_name, zone), changed=False)
-    except GoogleBaseError, e:
+    except GoogleBaseError as e:
         module.fail_json(msg=str(e), changed=False)
 
     node_tags = node.extra['tags']
@@ -156,7 +163,7 @@ def remove_tags(gce, module, instance_name, tags):
         node = gce.ex_get_node(instance_name, zone=zone)
     except ResourceNotFoundError:
         module.fail_json(msg='Instance %s not found in zone %s' % (instance_name, zone), changed=False)
-    except GoogleBaseError, e:
+    except GoogleBaseError as e:
         module.fail_json(msg=str(e), changed=False)
 
     node_tags = node.extra['tags']
@@ -220,10 +227,6 @@ def main():
 
     module.exit_json(changed=changed, instance_name=instance_name, tags=tags_changed, zone=zone)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.gce import *
 
 if __name__ == '__main__':
     main()
-

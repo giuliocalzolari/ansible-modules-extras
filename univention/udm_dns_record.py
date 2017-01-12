@@ -36,6 +36,10 @@ from univention.admin.handlers.dns import (
 )
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: udm_dns_record
@@ -81,10 +85,12 @@ options:
 
 EXAMPLES = '''
 # Create a DNS record on a UCS
-- udm_dns_zone: name=www
-                zone=example.com
-                type=host_record
-                data=['a': '192.0.2.1']
+- udm_dns_zone:
+    name: www
+    zone: example.com
+    type: host_record
+    data:
+      - a: 192.0.2.1
 '''
 
 

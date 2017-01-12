@@ -17,6 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: rhevm
@@ -715,22 +719,22 @@ class RHEVConn(object):
                 for iface in ifaces:
                     try:
                         setMsg('creating host interface ' + iface['name'])
-                        if 'management' in iface.keys():
+                        if 'management' in iface:
                             manageip = iface['ip']
-                        if 'boot_protocol' not in iface.keys():
-                            if 'ip' in iface.keys():
+                        if 'boot_protocol' not in iface:
+                            if 'ip' in iface:
                                 iface['boot_protocol'] = 'static'
                             else:
                                 iface['boot_protocol'] = 'none'
-                        if 'ip' not in iface.keys():
+                        if 'ip' not in iface:
                             iface['ip'] = ''
-                        if 'netmask' not in iface.keys():
+                        if 'netmask' not in iface:
                             iface['netmask'] = ''
-                        if 'gateway' not in iface.keys():
+                        if 'gateway' not in iface:
                             iface['gateway'] = ''
 
-                        if 'network' in iface.keys():
-                            if 'bond' in iface.keys():
+                        if 'network' in iface:
+                            if 'bond' in iface:
                                 bond = []
                                 for slave in iface['bond']:
                                     bond.append(ifacelist[slave])

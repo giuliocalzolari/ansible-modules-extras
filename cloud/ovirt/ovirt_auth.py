@@ -25,6 +25,10 @@ except ImportError:
     pass
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ovirt_auth
@@ -98,10 +102,7 @@ tasks:
        # oVirt user's password, and include that yaml file with variable:
        - include_vars: ovirt_password.yml
 
-       # Always be sure to pass 'no_log: true' to ovirt_auth task,
-       # so the oVirt user's password is not logged:
        - name: Obtain SSO token with using username/password credentials:
-         no_log: true
          ovirt_auth:
            url: https://ovirt.example.com/ovirt-engine/api
            username: admin@internal
@@ -171,8 +172,8 @@ def main():
         argument_spec=dict(
             url=dict(default=None),
             username=dict(default=None),
-            password=dict(default=None),
-            ca_file=dict(default=None),
+            password=dict(default=None, no_log=True),
+            ca_file=dict(default=None, type='path'),
             insecure=dict(required=False, type='bool', default=False),
             timeout=dict(required=False, type='int', default=0),
             compress=dict(required=False, type='bool', default=True),

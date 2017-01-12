@@ -14,6 +14,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'committer',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: azure_rm_deployment
@@ -42,7 +46,7 @@ options:
       - In incremental mode, resources are deployed without deleting existing resources that are not included in the template. 
         In complete mode resources are deployed and existing resources in the resource group not included in the template are deleted.
     required: false
-    default: complete
+    default: incremental
     choices:
         - complete
         - incremental
@@ -158,14 +162,19 @@ EXAMPLES = '''
       register: azure
 
     - name: Add new instance to host group
-      add_host: hostname={{ item['ips'][0].public_ip }} groupname=azure_vms
-      with_items: azure.deployment.instances
+      add_host:
+        hostname: '{{ item['ips'][0].public_ip }}'
+        groupname: azure_vms
+      with_items: "{{ azure.deployment.instances }}"
 
     - hosts: azure_vms
       user: devopscle
       tasks:
         - name: Wait for SSH to come up
-          wait_for: port=22 timeout=2000 state=started
+          wait_for:
+            port: 22
+            timeout: 2000
+            state: started
         - name: echo the hostname of the vm
           shell: hostname
 
@@ -190,7 +199,7 @@ EXAMPLES = '''
 
 # Create or update a template deployment based on an inline template and parameters
 - name: Create Azure Deploy
-  azure_rm_deploy:
+  azure_rm_deployment:
     state: present
     subscription_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     resource_group_name: dev-ops-cle
@@ -243,15 +252,13 @@ EXAMPLES = '''
         vnetID: "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]"
         subnetRef: "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
       resources:
-        -
-          type: "Microsoft.Storage/storageAccounts"
+        - type: "Microsoft.Storage/storageAccounts"
           name: "[parameters('newStorageAccountName')]"
           apiVersion: "2015-05-01-preview"
           location: "[variables('location')]"
           properties:
             accountType: "[variables('storageAccountType')]"
-        -
-          apiVersion: "2015-05-01-preview"
+        - apiVersion: "2015-05-01-preview"
           type: "Microsoft.Network/publicIPAddresses"
           name: "[variables('publicIPAddressName')]"
           location: "[variables('location')]"
@@ -259,8 +266,7 @@ EXAMPLES = '''
             publicIPAllocationMethod: "[variables('publicIPAddressType')]"
             dnsSettings:
               domainNameLabel: "[parameters('dnsNameForPublicIP')]"
-        -
-          type: "Microsoft.Network/virtualNetworks"
+        - type: "Microsoft.Network/virtualNetworks"
           apiVersion: "2015-05-01-preview"
           name: "[variables('virtualNetworkName')]"
           location: "[variables('location')]"
@@ -273,8 +279,7 @@ EXAMPLES = '''
                 name: "[variables('subnetName')]"
                 properties:
                   addressPrefix: "[variables('subnetPrefix')]"
-        -
-          type: "Microsoft.Network/networkInterfaces"
+        - type: "Microsoft.Network/networkInterfaces"
           apiVersion: "2015-05-01-preview"
           name: "[variables('nicName')]"
           location: "[variables('location')]"
@@ -291,8 +296,7 @@ EXAMPLES = '''
                     id: "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
                   subnet:
                     id: "[variables('subnetRef')]"
-        -
-          type: "Microsoft.Compute/virtualMachines"
+        - type: "Microsoft.Compute/virtualMachines"
           apiVersion: "2015-06-15"
           name: "[variables('vmName')]"
           location: "[variables('location')]"
@@ -405,7 +409,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
             template_link=dict(type='str', default=None),
             parameters_link=dict(type='str', default=None),
             location=dict(type='str', default="westus"),
-            deployment_mode=dict(type='str', default='complete', choices=['complete', 'incremental']),
+            deployment_mode=dict(type='str', default='incremental', choices=['complete', 'incremental']),
             deployment_name=dict(type='str', default="ansible-arm"),
             wait_for_deployment_completion=dict(type='bool', default=True),
             wait_for_deployment_polling_period=dict(type='int', default=10)
@@ -644,7 +648,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         return ip_dict
 
     def _nic_to_public_ips_instance(self, nics):
-        return [self.network_client.public_ip_addresses.get(self.resource_group_name, public_ip_id.split('/')[-1])
+        return [self.network_client.public_ip_addresses.get(public_ip_id.split('/')[4], public_ip_id.split('/')[-1])
                   for nic_obj in [self.network_client.network_interfaces.get(self.resource_group_name,
                                                                              nic['dep'].resource_name) for nic in nics]
                   for public_ip_id in [ip_conf_instance.public_ip_address.id

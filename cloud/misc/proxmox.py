@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: proxmox
@@ -40,8 +44,10 @@ options:
   vmid:
     description:
       - the instance id
+      - if not set, the next available VM ID will be fetched from ProxmoxAPI.
+      - if not set, will be fetched from PromoxAPI based on the hostname
     default: null
-    required: true
+    required: false
   validate_certs:
     description:
       - enable / disable https certificate verification
@@ -55,6 +61,12 @@ options:
       - for another states will be autodiscovered
     default: null
     required: false
+  pool:
+    description:
+      - Proxmox VE resource pool
+    default: null
+    required: false
+    version_added: "2.3"
   password:
     description:
       - the instance root password
@@ -65,6 +77,7 @@ options:
     description:
       - the instance hostname
       - required only for C(state=present)
+      - must be unique if vmid is not passed
     default: null
     required: false
   ostemplate:
@@ -164,40 +177,123 @@ options:
     default: present
 notes:
   - Requires proxmoxer and requests modules on host. This modules can be installed with pip.
-requirements: [ "proxmoxer", "requests" ]
+requirements: [ "proxmoxer", "python >= 2.7", "requests" ]
 author: "Sergei Antipov @UnderGreen"
 '''
 
 EXAMPLES = '''
 # Create new container with minimal options
-- proxmox: vmid=100 node='uk-mc02' api_user='root@pam' api_password='1q2w3e' api_host='node1' password='123456' hostname='example.org' ostemplate='local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+- proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+
+# Create new container automatically selecting the next available vmid.
+- proxmox: node='uk-mc02' api_user='root@pam' api_password='1q2w3e' api_host='node1' password='123456' hostname='example.org' ostemplate='local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
 
 # Create new container with minimal options with force(it will rewrite existing container)
-- proxmox: vmid=100 node='uk-mc02' api_user='root@pam' api_password='1q2w3e' api_host='node1' password='123456' hostname='example.org' ostemplate='local:vztmpl/ubuntu-14.04-x86_64.tar.gz' force=yes
+- proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    force: yes
 
 # Create new container with minimal options use environment PROXMOX_PASSWORD variable(you should export it before)
-- proxmox: vmid=100 node='uk-mc02' api_user='root@pam' api_host='node1' password='123456' hostname='example.org' ostemplate='local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+- proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
 
 # Create new container with minimal options defining network interface with dhcp
-- proxmox: vmid=100 node='uk-mc02' api_user='root@pam' api_password='1q2w3e' api_host='node1' password='123456' hostname='example.org' ostemplate='local:vztmpl/ubuntu-14.04-x86_64.tar.gz' netif='{"net0":"name=eth0,ip=dhcp,ip6=dhcp,bridge=vmbr0"}'
+- proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    netif: '{"net0":"name=eth0,ip=dhcp,ip6=dhcp,bridge=vmbr0"}'
+
+# Create new container with minimal options defining network interface with static ip
+- proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    netif: '{"net0":"name=eth0,gw=192.168.0.1,ip=192.168.0.2/24,bridge=vmbr0"}'
 
 # Create new container with minimal options defining a mount
-- proxmox: vmid=100 node='uk-mc02' api_user='root@pam' api_password='1q2w3e' api_host='node1' password='123456' hostname='example.org' ostemplate='local:vztmpl/ubuntu-14.04-x86_64.tar.gz' mounts='{"mp0":"local:8,mp=/mnt/test/"}'
+- proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    mounts: '{"mp0":"local:8,mp=/mnt/test/"}'
 
 # Start container
-- proxmox: vmid=100 api_user='root@pam' api_password='1q2w3e' api_host='node1' state=started
+- proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    state: started
 
 # Stop container
-- proxmox: vmid=100 api_user='root@pam' api_password='1q2w3e' api_host='node1' state=stopped
+- proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    state: stopped
 
 # Stop container with force
-- proxmox: vmid=100 api_user='root@pam' api_password='1q2w3e' api_host='node1' force=yes state=stopped
+- proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_passwordL 1q2w3e
+    api_host: node1
+    force: yes
+    state: stopped
 
 # Restart container(stopped or mounted container you can't restart)
-- proxmox: vmid=100 api_user='root@pam' api_password='1q2w3e' api_host='node1' state=stopped
+- proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    state: stopped
 
 # Remove container
-- proxmox: vmid=100 api_user='root@pam' api_password='1q2w3e' api_host='node1' state=absent
+- proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    state: absent
 '''
 
 import os
@@ -210,6 +306,16 @@ except ImportError:
   HAS_PROXMOXER = False
 
 VZ_TYPE=None
+
+def get_nextvmid(proxmox):
+  try:
+    vmid = proxmox.cluster.nextid.get()
+    return vmid
+  except Exception as e:
+    module.fail_json(msg="Unable to get next vmid. Failed with exception: %s")
+
+def get_vmid(proxmox, hostname):
+    return [ vm['vmid'] for vm in proxmox.cluster.resources.get(type='vm') if vm['name'] == hostname ]
 
 def get_instance(proxmox, vmid):
   return [ vm for vm in proxmox.cluster.resources.get(type='vm') if vm['vmid'] == int(vmid) ]
@@ -300,9 +406,10 @@ def main():
       api_host = dict(required=True),
       api_user = dict(required=True),
       api_password = dict(no_log=True),
-      vmid = dict(required=True),
+      vmid = dict(required=False),
       validate_certs = dict(type='bool', default='no'),
       node = dict(),
+      pool = dict(),
       password = dict(no_log=True),
       hostname = dict(),
       ostemplate = dict(),
@@ -339,6 +446,7 @@ def main():
   memory = module.params['memory']
   swap = module.params['swap']
   storage = module.params['storage']
+  hostname = module.params['hostname']
   if module.params['ostemplate'] is not None:
     template_store = module.params['ostemplate'].split(":")[0]
   timeout = module.params['timeout']
@@ -347,7 +455,7 @@ def main():
   if not api_password:
     try:
       api_password = os.environ['PROXMOX_PASSWORD']
-    except KeyError, e:
+    except KeyError as e:
       module.fail_json(msg='You should set api_password param or use PROXMOX_PASSWORD environment variable')
 
   try:
@@ -355,13 +463,25 @@ def main():
     global VZ_TYPE
     VZ_TYPE = 'openvz' if float(proxmox.version.get()['version']) < 4.0 else 'lxc'
 
-  except Exception, e:
+  except Exception as e:
     module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
+
+  # If vmid not set get the Next VM id from ProxmoxAPI
+  # If hostname is set get the VM id from ProxmoxAPI
+  if not vmid and state == 'present':
+    vmid = get_nextvmid(proxmox)
+  elif not vmid and hostname:
+    vmid = get_vmid(proxmox, hostname)[0]
+  elif not vmid:
+    module.exit_json(changed=False, msg="Vmid could not be fetched for the following action: %s" % state)
 
   if state == 'present':
     try:
       if get_instance(proxmox, vmid) and not module.params['force']:
         module.exit_json(changed=False, msg="VM with vmid = %s is already exists" % vmid)
+      # If no vmid was passed, there cannot be another VM named 'hostname'
+      if not module.params['vmid'] and get_vmid(proxmox, hostname) and not module.params['force']:
+        module.exit_json(changed=False, msg="VM with hostname %s already exists and has ID number %s" % (hostname, get_vmid(proxmox, hostname)[0]))
       elif not (node, module.params['hostname'] and module.params['password'] and module.params['ostemplate']):
         module.fail_json(msg='node, hostname, password and ostemplate are mandatory for creating vm')
       elif not node_check(proxmox, node):
@@ -371,6 +491,7 @@ def main():
                          % (module.params['ostemplate'], node, template_store))
 
       create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, swap, timeout,
+                      pool = module.params['pool'],
                       password = module.params['password'],
                       hostname = module.params['hostname'],
                       ostemplate = module.params['ostemplate'],
@@ -384,7 +505,7 @@ def main():
                       force = int(module.params['force']))
 
       module.exit_json(changed=True, msg="deployed VM %s from template %s"  % (vmid, module.params['ostemplate']))
-    except Exception, e:
+    except Exception as e:
       module.fail_json(msg="creation of %s VM %s failed with exception: %s" % ( VZ_TYPE, vmid, e ))
 
   elif state == 'started':
@@ -397,7 +518,7 @@ def main():
 
       if start_instance(module, proxmox, vm, vmid, timeout):
         module.exit_json(changed=True, msg="VM %s started" % vmid)
-    except Exception, e:
+    except Exception as e:
       module.fail_json(msg="starting of VM %s failed with exception: %s" % ( vmid, e ))
 
   elif state == 'stopped':
@@ -419,7 +540,7 @@ def main():
 
       if stop_instance(module, proxmox, vm, vmid, timeout, force = module.params['force']):
         module.exit_json(changed=True, msg="VM %s is shutting down" % vmid)
-    except Exception, e:
+    except Exception as e:
       module.fail_json(msg="stopping of VM %s failed with exception: %s" % ( vmid, e ))
 
   elif state == 'restarted':
@@ -434,7 +555,7 @@ def main():
       if ( stop_instance(module, proxmox, vm, vmid, timeout, force = module.params['force']) and
           start_instance(module, proxmox, vm, vmid, timeout) ):
         module.exit_json(changed=True, msg="VM %s is restarted" % vmid)
-    except Exception, e:
+    except Exception as e:
       module.fail_json(msg="restarting of VM %s failed with exception: %s" % ( vmid, e ))
 
   elif state == 'absent':
@@ -460,9 +581,11 @@ def main():
                            % proxmox_node.tasks(taskid).log.get()[:1])
 
         time.sleep(1)
-    except Exception, e:
+    except Exception as e:
       module.fail_json(msg="deletion of VM %s failed with exception: %s" % ( vmid, e ))
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

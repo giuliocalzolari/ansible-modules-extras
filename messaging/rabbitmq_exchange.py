@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: rabbitmq_exchange
@@ -100,10 +104,14 @@ options:
 
 EXAMPLES = '''
 # Create direct exchange
-- rabbitmq_exchange: name=directExchange
+- rabbitmq_exchange:
+    name: directExchange
 
 # Create topic exchange on vhost
-- rabbitmq_exchange: name=topicExchange type=topic vhost=myVhost
+- rabbitmq_exchange:
+    name: topicExchange
+    type: topic
+    vhost: myVhost
 '''
 
 import requests
@@ -215,4 +223,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

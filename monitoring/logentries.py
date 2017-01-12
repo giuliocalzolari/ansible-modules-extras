@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: logentries
@@ -48,8 +52,16 @@ notes:
     - Requires the LogEntries agent which can be installed following the instructions at logentries.com
 '''
 EXAMPLES = '''
-- logentries: path=/var/log/nginx/access.log state=present name=nginx-access-log
-- logentries: path=/var/log/nginx/error.log state=absent
+# Track nginx logs
+- logentries:
+    path: /var/log/nginx/access.log
+    state: present
+    name: nginx-access-log
+
+# Stop tracking nginx logs
+- logentries:
+    path: /var/log/nginx/error.log
+    state: absent
 '''
 
 def query_log_status(module, le_path, path, state="present"):
@@ -144,4 +156,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()

@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: capabilities
@@ -55,10 +59,16 @@ author: "Nate Coraor (@natefoo)"
 
 EXAMPLES = '''
 # Set cap_sys_chroot+ep on /foo
-- capabilities: path=/foo capability=cap_sys_chroot+ep state=present
+- capabilities:
+    path: /foo
+    capability: cap_sys_chroot+ep
+    state: present
 
 # Remove cap_net_bind_service from /bar
-- capabilities: path=/bar capability=cap_net_bind_service state=absent
+- capabilities:
+    path: /bar
+    capability: cap_net_bind_service
+    state: absent
 '''
 
 
@@ -183,4 +193,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

@@ -19,6 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: smartos_image_facts
@@ -51,7 +55,7 @@ smartos_image_facts:
 
 debug: msg="{{ smartos_images[item]['name'] }}-{{smartos_images[item]['version'] }}
             has {{ smartos_images[item]['clones'] }} VM(s)"
-with_items: smartos_images.keys()
+with_items: "{{ smartos_images.keys() }}"
 '''
 
 RETURN = '''
@@ -114,4 +118,6 @@ def main():
     module.exit_json(ansible_facts=data)
 
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

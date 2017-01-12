@@ -24,6 +24,10 @@ except ImportError:
 from ansible.module_utils.basic import *
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ipmi_power
@@ -83,7 +87,11 @@ powerstate:
 
 EXAMPLES = '''
 # Ensure machine is powered on.
-- ipmi_power: name="test.testdomain.com" user="admin" password="password" state="on"
+- ipmi_power:
+    name: test.testdomain.com
+    user: admin
+    password: password
+    state: on
 '''
 
 # ==================================================

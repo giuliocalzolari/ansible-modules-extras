@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: postgresql_ext
@@ -70,7 +74,9 @@ author: "Daniel Schep (@dschep)"
 
 EXAMPLES = '''
 # Adds postgis to the database "acme"
-- postgresql_ext: name=postgis db=acme
+- postgresql_ext:
+    name: postgis
+    db: acme
 '''
 
 try:
@@ -118,7 +124,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             login_user=dict(default="postgres"),
-            login_password=dict(default=""),
+            login_password=dict(default="", no_log=True),
             login_host=dict(default=""),
             port=dict(default="5432"),
             db=dict(required=True),
@@ -159,7 +165,8 @@ def main():
                                               .ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = db_connection.cursor(
                 cursor_factory=psycopg2.extras.DictCursor)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="unable to connect to database: %s" % e)
 
     try:
@@ -174,14 +181,18 @@ def main():
     
             elif state == "present":
                 changed = ext_create(cursor, ext)
-    except NotSupportedError, e:
+    except NotSupportedError:
+        e = get_exception()
         module.fail_json(msg=str(e))
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="Database query failed: %s" % e)
 
     module.exit_json(changed=changed, db=db, ext=ext)
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+from ansible.module_utils.pycompat24 import get_exception
 
+if __name__ == '__main__':
+    main()

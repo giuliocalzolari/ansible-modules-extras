@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: rabbitmq_queue
@@ -114,10 +118,15 @@ options:
 
 EXAMPLES = '''
 # Create a queue
-- rabbitmq_queue: name=myQueue
+- rabbitmq_queue:
+    name: myQueue
 
 # Create a queue on remote host
-- rabbitmq_queue: name=myRemoteQueue login_user=user login_password=secret login_host=remote.example.org
+- rabbitmq_queue:
+    name: myRemoteQueue
+    login_user: user
+    login_password: secret
+    login_host: remote.example.org
 '''
 
 import requests
@@ -260,4 +269,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

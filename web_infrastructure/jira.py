@@ -20,6 +20,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = """
 module: jira
 version_added: "1.6"
@@ -91,6 +95,24 @@ options:
     description:
      - Sets the assignee on create or transition operations. Note not all transitions will allow this.
 
+  linktype:
+    required: false
+    version_added: 2.3
+    description:
+     - Set type of link, when action 'link' selected
+
+  inwardissue:
+    required: false
+    version_added: 2.3
+    description:
+     - set issue from which link will be created
+
+  outwardissue:
+    required: false
+    version_added: 2.3
+    description:
+     - set issue to which link will be created
+
   fields:
     required: false
     description:
@@ -105,59 +127,93 @@ author: "Steve Smith (@tarka)"
 EXAMPLES = """
 # Create a new issue and add a comment to it:
 - name: Create an issue
-  jira: uri={{server}} username={{user}} password={{pass}}
-        project=ANS operation=create
-        summary="Example Issue" description="Created using Ansible" issuetype=Task
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    project: ANS
+    operation: create
+    summary: Example Issue
+    description: Created using Ansible
+    issuetype: Task
   register: issue
 
 - name: Comment on issue
-  jira: uri={{server}} username={{user}} password={{pass}}
-        issue={{issue.meta.key}} operation=comment 
-        comment="A comment added by Ansible"
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    issue: '{{ issue.meta.key }}'
+    operation: comment
+    comment: A comment added by Ansible
 
 # Assign an existing issue using edit
 - name: Assign an issue using free-form fields
-  jira: uri={{server}} username={{user}} password={{pass}}
-        issue={{issue.meta.key}} operation=edit
-        assignee=ssmith
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    issue: '{{ issue.meta.key}}'
+    operation: edit
+    assignee: ssmith
 
 # Create an issue with an existing assignee
 - name: Create an assigned issue
-  jira: uri={{server}} username={{user}} password={{pass}}
-        project=ANS operation=create
-        summary="Assigned issue" description="Created and assigned using Ansible" 
-        issuetype=Task assignee=ssmith
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    project: ANS
+    operation: create
+    summary: Assigned issue
+    description: Created and assigned using Ansible
+    issuetype: Task
+    assignee: ssmith
 
-# Edit an issue using free-form fields
+# Edit an issue
 - name: Set the labels on an issue using free-form fields
-  jira: uri={{server}} username={{user}} password={{pass}}
-        issue={{issue.meta.key}} operation=edit 
-  args: { fields: {labels: ["autocreated", "ansible"]}}
-
-- name: Set the labels on an issue, YAML version
-  jira: uri={{server}} username={{user}} password={{pass}}
-        issue={{issue.meta.key}} operation=edit 
-  args: 
-    fields: 
-      labels:
-        - "autocreated"
-        - "ansible"
-        - "yaml"
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    issue: '{{ issue.meta.key }}'
+    operation: edit
+  args:
+    fields:
+        labels:
+          - autocreated
+          - ansible
 
 # Retrieve metadata for an issue and use it to create an account
 - name: Get an issue
-  jira: uri={{server}} username={{user}} password={{pass}}
-        project=ANS operation=fetch issue="ANS-63"
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    project: ANS
+    operation: fetch
+    issue: ANS-63
   register: issue
 
 - name: Create a unix account for the reporter
-  sudo: true
-  user: name="{{issue.meta.fields.creator.name}}" comment="{{issue.meta.fields.creator.displayName}}"
+  become: true
+  user:
+    name: '{{ issue.meta.fields.creator.name }}'
+    comment: '{{issue.meta.fields.creator.displayName }}'
+
+- name: Create link from HSP-1 to MKY-1
+  jira: uri={{server}} username={{user}} password={{pass}} operation=link
+        linktype=Relate inwardissue=HSP-1 outwardissue=MKY-1
 
 # Transition an issue by target status
 - name: Close the issue
-  jira: uri={{server}} username={{user}} password={{pass}}
-        issue={{issue.meta.key}} operation=transition status="Done"
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    issue: '{{ issue.meta.key }}'
+    operation: transition
+    status: Done
 """
 
 try:
@@ -285,13 +341,26 @@ def transition(restbase, user, passwd, params):
 
     return ret
 
+def link(restbase, user, passwd, params):
+    data = {
+        'type': { 'name': params['linktype'] },
+        'inwardIssue': { 'key': params['inwardissue'] },
+        'outwardIssue': { 'key': params['outwardissue'] },
+    }
+
+    url = restbase + '/issueLink/'
+
+    ret = post(url, user, passwd, data)
+
+    return ret
 
 # Some parameters are required depending on the operation:
 OP_REQUIRED = dict(create=['project', 'issuetype', 'summary', 'description'],
                    comment=['issue', 'comment'],
                    edit=[],
                    fetch=['issue'],
-                   transition=['status'])
+                   transition=['status'],
+                   link=['linktype', 'inwardissue', 'outwardissue'])
 
 def main():
 
@@ -299,7 +368,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             uri=dict(required=True),
-            operation=dict(choices=['create', 'comment', 'edit', 'fetch', 'transition'],
+            operation=dict(choices=['create', 'comment', 'edit', 'fetch', 'transition', 'link'],
                            aliases=['command'], required=True),
             username=dict(required=True),
             password=dict(required=True),
@@ -311,7 +380,10 @@ def main():
             comment=dict(),
             status=dict(),
             assignee=dict(),
-            fields=dict(default={})
+            fields=dict(default={}, type='dict'),
+            linktype=dict(),
+            inwardissue=dict(),
+            outwardissue=dict(),
         ),
         supports_check_mode=False
     )
@@ -355,5 +427,5 @@ def main():
     module.exit_json(changed=True, meta=ret)
 
 
-
-main()
+if __name__ == '__main__':
+    main()

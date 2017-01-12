@@ -23,6 +23,10 @@ along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: kibana_plugin
@@ -79,13 +83,20 @@ options:
 
 EXAMPLES = '''
 # Install Elasticsearch head plugin
-- kibana_plugin: state=present name="elasticsearch/marvel"
+- kibana_plugin:
+    state: present
+    name=: elasticsearch/marvel
 
 # Install specific version of a plugin
-- kibana_plugin: state=present name="elasticsearch/marvel" version="2.3.3"
+- kibana_plugin:
+    state: present
+    name: elasticsearch/marvel
+    version: '2.3.3'
 
 # Uninstall Elasticsearch head plugin
-- kibana_plugin: state=absent name="elasticsearch/marvel"
+- kibana_plugin:
+    state: absent
+    name: elasticsearch/marvel
 '''
 
 RETURN = '''

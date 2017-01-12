@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: cs_network
@@ -59,14 +63,14 @@ options:
   gateway:
     description:
       - The gateway of the network.
-      - Required for shared networks and isolated networks when it belongs to VPC.
+      - Required for shared networks and isolated networks when it belongs to a VPC.
       - Only considered on create.
     required: false
     default: null
   netmask:
     description:
       - The netmask of the network.
-      - Required for shared networks and isolated networks when it belongs to VPC.
+      - Required for shared networks and isolated networks when it belongs to a VPC.
       - Only considered on create.
     required: false
     default: null
@@ -91,7 +95,7 @@ options:
     default: null
   gateway_ipv6:
     description:
-      - The gateway of the IPv6 network. 
+      - The gateway of the IPv6 network.
       - Required for shared networks.
       - Only considered on create.
     required: false
@@ -103,12 +107,12 @@ options:
     default: null
   vpc:
     description:
-      - The ID or VID of the network.
+      - Name of the VPC of the network.
     required: false
     default: null
   isolated_pvlan:
     description:
-      - The isolated private vlan for this network.
+      - The isolated private VLAN for this network.
     required: false
     default: null
   clean_up:
@@ -342,27 +346,7 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
             'dns1':                 'dns1',
             'dns2':                 'dns2',
         }
-
         self.network = None
-
-
-    def get_vpc(self, key=None):
-        vpc = self.module.params.get('vpc')
-        if not vpc:
-            return None
-
-        args                = {}
-        args['account']     = self.get_account(key='name')
-        args['domainid']    = self.get_domain(key='id')
-        args['projectid']   = self.get_project(key='id')
-        args['zoneid']      = self.get_zone(key='id')
-
-        vpcs = self.cs.listVPCs(**args)
-        if vpcs:
-            for v in vpcs['vpc']:
-                if vpc in [ v['name'], v['displaytext'], v['id'] ]:
-                    return self._get_by_key(key, v)
-        self.module.fail_json(msg="VPC '%s' not found" % vpc)
 
 
     def get_network_offering(self, key=None):

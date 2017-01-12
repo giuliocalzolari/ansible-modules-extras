@@ -3,7 +3,8 @@
 
 """
 Ansible module to manage A10 Networks slb server objects
-(c) 2014, Mischa Peters <mpeters@a10networks.com>
+(c) 2014, Mischa Peters <mpeters@a10networks.com>,
+2016, Eric Chou <ericc@a10networks.com>
 
 This file is part of Ansible
 
@@ -21,45 +22,42 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: a10_server
 version_added: 1.8
-short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices
+short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices' server object.
 description:
-    - Manage slb server objects on A10 Networks devices via aXAPI
-author: "Mischa Peters (@mischapeters)"
+    - Manage SLB (Server Load Balancer) server objects on A10 Networks devices via aXAPIv2.
+author: "Eric Chou (@ericchou) 2016, Mischa Peters (@mischapeters) 2014"
 notes:
-    - Requires A10 Networks aXAPI 2.1
+    - Requires A10 Networks aXAPI 2.1.
+extends_documentation_fragment: a10
 options:
-  host:
+  partition:
+    version_added: "2.3"
     description:
-      - hostname or ip of your A10 Networks device
-    required: true
-  username:
-    description:
-      - admin account of your A10 Networks device
-    required: true
-    aliases: ['user', 'admin']
-  password:
-    description:
-      - admin password of your A10 Networks device
-    required: true
-    aliases: ['pass', 'pwd']
+      - set active-partition
+    required: false
+    default: null
   server_name:
     description:
-      - slb server name
+      - The SLB (Server Load Balancer) server name.
     required: true
     aliases: ['server']
   server_ip:
     description:
-      - slb server IP address
+      - The SLB server IPv4 address.
     required: false
     default: null
     aliases: ['ip', 'address']
   server_status:
     description:
-      - slb virtual server status
+      - The SLB virtual server status.
     required: false
     default: enabled
     aliases: ['status']
@@ -74,29 +72,23 @@ options:
     default: null
   state:
     description:
-      - create, update or remove slb server
+      - This is to specify the operation to create, update or remove SLB server.
     required: false
     default: present
     choices: ['present', 'absent']
-  write_config:
-    description:
-      - If C(yes), any changes will cause a write of the running configuration
-        to non-volatile memory. This will save I(all) configuration changes,
-        including those that may have been made manually or through other modules,
-        so care should be taken when specifying C(yes).
-    required: false
-    version_added: 2.2
-    default: "no"
-    choices: ["yes", "no"]
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled devices using self-signed certificates.
     required: false
-    version_added: 2.2
+    version_added: 2.3
     default: 'yes'
     choices: ['yes', 'no']
 
+'''
+
+RETURN = '''
+#
 '''
 
 EXAMPLES = '''
@@ -105,6 +97,7 @@ EXAMPLES = '''
     host: a10.mydomain.com
     username: myadmin
     password: mypassword
+    partition: mypartition
     server: test
     server_ip: 1.1.1.100
     server_ports:
@@ -114,6 +107,15 @@ EXAMPLES = '''
         protocol: TCP
 
 '''
+
+RETURN = '''
+content:
+  description: the full info regarding the slb_server
+  returned: success
+  type: string
+  sample: "mynewserver"
+'''
+
 
 VALID_PORT_FIELDS = ['port_num', 'protocol', 'status']
 
@@ -160,6 +162,7 @@ def main():
             server_ip=dict(type='str', aliases=['ip', 'address']),
             server_status=dict(type='str', default='enabled', aliases=['status'], choices=['enabled', 'disabled']),
             server_ports=dict(type='list', aliases=['port'], default=[]),
+            partition=dict(type='str', default=[]),
         )
     )
 
@@ -169,6 +172,7 @@ def main():
     )
 
     host = module.params['host']
+    partition = module.params['partition']
     username = module.params['username']
     password = module.params['password']
     state = module.params['state']
@@ -202,6 +206,8 @@ def main():
 
     if slb_server_status:
         json_post['server']['status'] = axapi_enabled_disabled(slb_server_status)
+
+    slb_server_partition = axapi_call(module, session_url + '&method=system.partition.active', json.dumps({'name': partition}))
 
     slb_server_data = axapi_call(module, session_url + '&method=slb.server.search', json.dumps({'name': slb_server}))
     slb_server_exists = not axapi_failure(slb_server_data)
@@ -286,9 +292,12 @@ def main():
     axapi_call(module, session_url + '&method=session.close')
     module.exit_json(changed=changed, content=result)
 
-# standard ansible module imports
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.a10 import *
+# ansible module imports
+import json
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import url_argument_spec
+from ansible.module_utils.a10 import axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure, axapi_get_port_protocol, axapi_enabled_disabled
 
-main()
+
+if __name__ == '__main__':
+    main()

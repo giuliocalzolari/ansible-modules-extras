@@ -15,6 +15,10 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: nagios
@@ -89,56 +93,107 @@ author: "Tim Bielawa (@tbielawa)"
 
 EXAMPLES = '''
 # set 30 minutes of apache downtime
-- nagios: action=downtime minutes=30 service=httpd host={{ inventory_hostname }}
+- nagios:
+    action: downtime
+    minutes: 30
+    service: httpd
+    host: '{{ inventory_hostname }}'
 
 # schedule an hour of HOST downtime
-- nagios: action=downtime minutes=60 service=host host={{ inventory_hostname }}
+- nagios:
+    action: downtime
+    minutes: 60
+    service: host
+    host: '{{ inventory_hostname }}'
 
 # schedule an hour of HOST downtime, with a comment describing the reason
-- nagios: action=downtime minutes=60 service=host host={{ inventory_hostname }}
-          comment='This host needs disciplined'
+- nagios:
+    action: downtime
+    minutes: 60
+    service: host
+    host: '{{ inventory_hostname }}'
+    comment: Rebuilding machine
 
 # schedule downtime for ALL services on HOST
-- nagios: action=downtime minutes=45 service=all host={{ inventory_hostname }}
+- nagios:
+    action: downtime
+    minutes: 45
+    service: all
+    host: '{{ inventory_hostname }}'
 
 # schedule downtime for a few services
-- nagios: action=downtime services=frob,foobar,qeuz host={{ inventory_hostname }}
+- nagios:
+    action: downtime
+    services: frob,foobar,qeuz
+    host: '{{ inventory_hostname }}'
 
 # set 30 minutes downtime for all services in servicegroup foo
-- nagios: action=servicegroup_service_downtime minutes=30 servicegroup=foo host={{ inventory_hostname }}
+- nagios:
+    action: servicegroup_service_downtime
+    minutes: 30
+    servicegroup: foo
+    host: '{{ inventory_hostname }}'
 
 # set 30 minutes downtime for all host in servicegroup foo
-- nagios: action=servicegroup_host_downtime minutes=30 servicegroup=foo host={{ inventory_hostname }}
+- nagios:
+    action: servicegroup_host_downtime
+    minutes: 30
+    servicegroup: foo
+    host: '{{ inventory_hostname }}'
 
 # delete all downtime for a given host
-- nagios: action=delete_downtime host={{ inventory_hostname }} service=all
+- nagios:
+    action: delete_downtime
+    host: '{{ inventory_hostname }}'
+    service: all
 
 # delete all downtime for HOST with a particular comment
-- nagios: action=delete_downtime host={{ inventory_hostname }} service=host comment="Planned maintenance"
+- nagios:
+    action: delete_downtime
+    host: '{{ inventory_hostname }}'
+    service: host
+    comment: Planned maintenance
 
 # enable SMART disk alerts
-- nagios: action=enable_alerts service=smart host={{ inventory_hostname }}
+- nagios:
+    action: enable_alerts
+    service: smart
+    host: '{{ inventory_hostname }}'
 
 # "two services at once: disable httpd and nfs alerts"
-- nagios: action=disable_alerts service=httpd,nfs host={{ inventory_hostname }}
+- nagios:
+    action: disable_alerts
+    service: httpd,nfs
+    host: '{{ inventory_hostname }}'
 
 # disable HOST alerts
-- nagios: action=disable_alerts service=host host={{ inventory_hostname }}
+- nagios:
+    action: disable_alerts
+    service: host
+    host: '{{ inventory_hostname }}'
 
 # silence ALL alerts
-- nagios: action=silence host={{ inventory_hostname }}
+- nagios:
+    action: silence
+    host: '{{ inventory_hostname }}'
 
 # unsilence all alerts
-- nagios: action=unsilence host={{ inventory_hostname }}
+- nagios:
+    action: unsilence
+    host: '{{ inventory_hostname }}'
 
 # SHUT UP NAGIOS
-- nagios: action=silence_nagios
+- nagios:
+    action: silence_nagios
 
 # ANNOY ME NAGIOS
-- nagios: action=unsilence_nagios
+- nagios:
+    action: unsilence_nagios
 
 # command something
-- nagios: action=command command='DISABLE_FAILURE_PREDICTION'
+- nagios:
+    action: command
+    command: DISABLE_FAILURE_PREDICTION
 '''
 
 import ConfigParser
@@ -1027,4 +1082,6 @@ class Nagios(object):
 ######################################################################
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

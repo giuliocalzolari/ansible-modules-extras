@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = """
 ---
 module: vertica_user
@@ -129,6 +133,10 @@ except ImportError:
     pyodbc_found = False
 else:
     pyodbc_found = True
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+
 
 class NotSupportedError(Exception):
     pass
@@ -351,7 +359,8 @@ def main():
                 module.params['login_user'], module.params['login_password'], 'true')
         db_conn = pyodbc.connect(dsn, autocommit=True)
         cursor = db_conn.cursor()
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="Unable to connect to database: {0}.".format(e))
 
     try:
@@ -362,27 +371,31 @@ def main():
         elif state == 'absent':
             try:
                 changed = absent(user_facts, cursor, user, roles)
-            except pyodbc.Error, e:
+            except pyodbc.Error:
+                e = get_exception()
                 module.fail_json(msg=str(e))
         elif state in ['present', 'locked']:
             try:
                 changed = present(user_facts, cursor, user, profile, resource_pool,
                     locked, password, expired, ldap, roles)
-            except pyodbc.Error, e:
+            except pyodbc.Error:
+                e = get_exception()
                 module.fail_json(msg=str(e))
-    except NotSupportedError, e:
+    except NotSupportedError:
+        e = get_exception()
         module.fail_json(msg=str(e), ansible_facts={'vertica_users': user_facts})
-    except CannotDropError, e:
+    except CannotDropError:
+        e = get_exception()
         module.fail_json(msg=str(e), ansible_facts={'vertica_users': user_facts})
     except SystemExit:
         # avoid catching this on python 2.4
         raise
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg=e)
 
     module.exit_json(changed=changed, user=user, ansible_facts={'vertica_users': user_facts})
 
-# import ansible utilities
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

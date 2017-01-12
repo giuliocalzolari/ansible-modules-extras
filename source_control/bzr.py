@@ -19,6 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = u'''
 ---
 module: bzr
@@ -62,7 +66,10 @@ options:
 
 EXAMPLES = '''
 # Example bzr checkout from Ansible Playbooks
-- bzr: name=bzr+ssh://foosball.example.org/path/to/branch dest=/srv/checkout version=22
+- bzr:
+    name: 'bzr+ssh://foosball.example.org/path/to/branch'
+    dest: /srv/checkout
+    version: 22
 '''
 
 import re
@@ -196,4 +203,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

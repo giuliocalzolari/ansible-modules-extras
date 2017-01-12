@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 author: "Alexander Bulimov (@abulimov)"
@@ -58,10 +62,15 @@ notes:
 
 EXAMPLES = '''
 # Create a ext2 filesystem on /dev/sdb1.
-- filesystem: fstype=ext2 dev=/dev/sdb1
+- filesystem:
+    fstype: ext2
+    dev: /dev/sdb1
 
 # Create a ext4 filesystem on /dev/sdb1 and check disk blocks.
-- filesystem: fstype=ext4 dev=/dev/sdb1 opts="-cc"
+- filesystem:
+    fstype: ext4
+    dev: /dev/sdb1
+    opts: -cc
 '''
 
 def _get_dev_size(dev, module):

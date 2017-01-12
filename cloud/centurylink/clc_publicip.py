@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 module: clc_publicip
 short_description: Add and Delete public ips on servers in CenturyLink Cloud.
@@ -81,17 +85,18 @@ EXAMPLES = '''
   tasks:
     - name: Create Public IP For Servers
       clc_publicip:
-        protocol: 'TCP'
+        protocol: TCP
         ports:
-            - 80
+          - 80
         server_ids:
-            - UC1TEST-SVR01
-            - UC1TEST-SVR02
+          - UC1TEST-SVR01
+          - UC1TEST-SVR02
         state: present
       register: clc
 
     - name: debug
-      debug: var=clc
+      debug:
+        var: clc
 
 - name: Delete Public IP from Server
   hosts: localhost
@@ -101,13 +106,14 @@ EXAMPLES = '''
     - name: Create Public IP For Servers
       clc_publicip:
         server_ids:
-            - UC1TEST-SVR01
-            - UC1TEST-SVR02
+          - UC1TEST-SVR01
+          - UC1TEST-SVR02
         state: absent
       register: clc
 
     - name: debug
-      debug: var=clc
+      debug:
+        var: clc
 '''
 
 RETURN = '''
@@ -124,6 +130,7 @@ server_ids:
 
 __version__ = '${version}'
 
+import os
 from distutils.version import LooseVersion
 
 try:
@@ -145,6 +152,8 @@ except ImportError:
     clc_sdk = None
 else:
     CLC_FOUND = True
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 class ClcPublicIp(object):
@@ -241,7 +250,7 @@ class ClcPublicIp(object):
         result = None
         try:
             result = server.PublicIPs().Add(ports_to_expose)
-        except CLCException, ex:
+        except CLCException as ex:
             self.module.fail_json(msg='Failed to add public ip to the server : {0}. {1}'.format(
                 server.id, ex.response_text
             ))
@@ -278,7 +287,7 @@ class ClcPublicIp(object):
         try:
             for ip_address in server.PublicIPs().public_ips:
                     result = ip_address.Delete()
-        except CLCException, ex:
+        except CLCException as ex:
             self.module.fail_json(msg='Failed to remove public ip from the server : {0}. {1}'.format(
                 server.id, ex.response_text
             ))
@@ -358,6 +367,6 @@ def main():
     clc_public_ip = ClcPublicIp(module)
     clc_public_ip.process_request()
 
-from ansible.module_utils.basic import *  # pylint: disable=W0614
+
 if __name__ == '__main__':
     main()

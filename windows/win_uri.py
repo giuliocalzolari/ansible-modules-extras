@@ -21,6 +21,10 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = """
 ---
 module: win_uri
@@ -120,6 +124,12 @@ use_basic_parsing:
   returned: always
   type: bool
   sample: True
+body:
+  description: The content of the body used
+  returned: when body is specified
+  type: string
+  sample: '{"id":1}'
+  version_added: "2.3"
 status_code:
   description: The HTTP Status Code of the response.
   returned: success

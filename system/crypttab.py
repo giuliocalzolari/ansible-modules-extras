@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: crypttab
@@ -52,7 +56,7 @@ options:
     default: null
   password:
     description:
-      - Encryption password, the path to a file containing the pasword, or
+      - Encryption password, the path to a file containing the password, or
         'none' or '-' if the password should be entered at boot.
     required: false
     default: "none"
@@ -73,12 +77,20 @@ author: "Steve (@groks)"
 '''
 
 EXAMPLES = '''
+
+# Since column is a special character in YAML, if your string contains a column, it's better to use quotes around the string
 - name: Set the options explicitly a device which must already exist
-  crypttab: name=luks-home state=present opts=discard,cipher=aes-cbc-essiv:sha256
+  crypttab:
+    name: luks-home
+    state: present
+    opts: 'discard,cipher=aes-cbc-essiv:sha256'
 
 - name: Add the 'discard' option to any existing options for all devices
-  crypttab: name={{ item.device }} state=opts_present opts=discard
-  with_items: ansible_mounts
+  crypttab:
+    name: '{{ item.device }}'
+    state: opts_present
+    opts: discard
+  with_items: '{{ ansible_mounts }}'
   when: '/dev/mapper/luks-' in {{ item.device }}
 '''
 
@@ -92,9 +104,9 @@ def main():
             name           = dict(required=True),
             state          = dict(required=True, choices=['present', 'absent', 'opts_present', 'opts_absent']),
             backing_device = dict(default=None),
-            password       = dict(default=None),
+            password       = dict(default=None, type='path'),
             opts           = dict(default=None),
-            path           = dict(default='/etc/crypttab')
+            path           = dict(default='/etc/crypttab', type='path')
         ),
         supports_check_mode = True
     )
@@ -312,7 +324,7 @@ class Options(dict):
     def add(self, opts_string):
         changed = False
         for k, v in Options(opts_string).items():
-            if self.has_key(k):
+            if k in self:
                 if self[k] != v:
                     changed = True
             else:
@@ -323,7 +335,7 @@ class Options(dict):
     def remove(self, opts_string):
         changed = False
         for k in Options(opts_string):
-            if self.has_key(k):
+            if k in self:
                 del self[k]
                 changed = True
         return changed, 'removed options'
@@ -341,7 +353,7 @@ class Options(dict):
         return iter(self.itemlist)
 
     def __setitem__(self, key, value):
-        if not self.has_key(key):
+        if key not in self:
             self.itemlist.append(key)
         super(Options, self).__setitem__(key, value)
 
@@ -362,4 +374,5 @@ class Options(dict):
                 ret.append('%s=%s' % (k, v))
         return ','.join(ret)
 
-main()
+if __name__ == '__main__':
+    main()

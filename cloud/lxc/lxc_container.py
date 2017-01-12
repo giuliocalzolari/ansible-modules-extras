@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = """
 ---
 module: lxc_container
@@ -268,7 +272,8 @@ EXAMPLES = """
   register: lvm_container_info
 
 - name: Debug info on container "test-container-lvm"
-  debug: var=lvm_container_info
+  debug:
+    var: lvm_container_info
 
 - name: Run a command in a container and ensure its in a "stopped" state.
   lxc_container:
@@ -334,7 +339,8 @@ EXAMPLES = """
   register: clone_container_info
 
 - name: debug info on container "test-container"
-  debug: var=clone_container_info
+  debug:
+    var: clone_container_info
 
 - name: Clone a container using snapshot
   lxc_container:
@@ -364,7 +370,7 @@ EXAMPLES = """
 
 - name: Destroy a container
   lxc_container:
-    name: "{{ item }}"
+    name: '{{ item }}'
     state: absent
   with_items:
     - test-container-stopped

@@ -35,6 +35,10 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: maven_artifact
@@ -102,6 +106,12 @@ options:
         required: true
         default: present
         choices: [present,absent]
+    timeout:
+        description:
+            - Specifies a timeout in seconds for the connection attempt
+        required: false
+        default: 10
+        version_added: "2.3"
     validate_certs:
         description:
             - If C(no), SSL certificates will not be validated. This should only be set to C(no) when no other option exists.
@@ -113,16 +123,34 @@ options:
 
 EXAMPLES = '''
 # Download the latest version of the JUnit framework artifact from Maven Central
-- maven_artifact: group_id=junit artifact_id=junit dest=/tmp/junit-latest.jar
+- maven_artifact:
+    group_id: junit
+    artifact_id: junit
+    dest: /tmp/junit-latest.jar
 
 # Download JUnit 4.11 from Maven Central
-- maven_artifact: group_id=junit artifact_id=junit version=4.11 dest=/tmp/junit-4.11.jar
+- maven_artifact:
+    group_id: junit
+    artifact_id: junit
+    version: 4.11
+    dest: /tmp/junit-4.11.jar
 
 # Download an artifact from a private repository requiring authentication
-- maven_artifact: group_id=com.company artifact_id=library-name repository_url=https://repo.company.com/maven username=user password=pass dest=/tmp/library-name-latest.jar
+- maven_artifact:
+    group_id: com.company
+    artifact_id: library-name
+    repository_url: 'https://repo.company.com/maven'
+    username: user
+    password: pass
+    dest: /tmp/library-name-latest.jar
 
 # Download a WAR File to the Tomcat webapps directory to be deployed
-- maven_artifact: group_id=com.company artifact_id=web-app extension=war repository_url=https://repo.company.com/maven dest=/var/lib/tomcat7/webapps/web-app.war
+- maven_artifact:
+    group_id: com.company
+    artifact_id: web-app
+    extension: war
+    repository_url: 'https://repo.company.com/maven'
+    dest: /var/lib/tomcat7/webapps/web-app.war
 '''
 
 class Artifact(object):
@@ -216,6 +244,9 @@ class MavenDownloader:
             xml = self._request(self.base + path, "Failed to download maven-metadata.xml", lambda r: etree.parse(r))
             timestamp = xml.xpath("/metadata/versioning/snapshot/timestamp/text()")[0]
             buildNumber = xml.xpath("/metadata/versioning/snapshot/buildNumber/text()")[0]
+            for snapshotArtifact in xml.xpath("/metadata/versioning/snapshotVersions/snapshotVersion"):
+                if len(snapshotArtifact.xpath("classifier/text()")) > 0 and snapshotArtifact.xpath("classifier/text()")[0] == artifact.classifier and len(snapshotArtifact.xpath("extension/text()")) > 0 and snapshotArtifact.xpath("extension/text()")[0] == artifact.extension:
+                    return self._uri_for_artifact(artifact, snapshotArtifact.xpath("value/text()")[0])
             return self._uri_for_artifact(artifact, artifact.version.replace("SNAPSHOT", timestamp + "-" + buildNumber))
 
         return self._uri_for_artifact(artifact, artifact.version)
@@ -240,12 +271,14 @@ class MavenDownloader:
                 client = boto3.client('s3',aws_access_key_id=self.module.params.get('username', ''), aws_secret_access_key=self.module.params.get('password', ''))
                 url_to_use = client.generate_presigned_url('get_object',Params={'Bucket':bucket_name,'Key':key_name},ExpiresIn=10)
 
+        req_timeout = self.module.params.get('timeout')
+
         # Hack to add parameters in the way that fetch_url expects
         self.module.params['url_username'] = self.module.params.get('username', '')
         self.module.params['url_password'] = self.module.params.get('password', '')
         self.module.params['http_agent'] = self.module.params.get('user_agent', None)
 
-        response, info = fetch_url(self.module, url_to_use)
+        response, info = fetch_url(self.module, url_to_use, timeout=req_timeout)
         if info['status'] != 200:
             raise ValueError(failmsg + " because of " + info['msg'] + "for URL " + url_to_use)
         else:
@@ -328,6 +361,7 @@ def main():
             username = dict(default=None,aliases=['aws_secret_key']),
             password = dict(default=None, no_log=True,aliases=['aws_secret_access_key']),
             state = dict(default="present", choices=["present","absent"]), # TODO - Implement a "latest" state
+            timeout = dict(default=10, type='int'),
             dest = dict(type="path", default=None),
             validate_certs = dict(required=False, default=True, type='bool'),
         )

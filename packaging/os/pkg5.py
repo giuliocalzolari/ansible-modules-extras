@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: pkg5
@@ -49,10 +53,13 @@ options:
 '''
 EXAMPLES = '''
 # Install Vim:
-- pkg5: name=editor/vim
+- pkg5:
+    name: editor/vim
 
 # Remove finger daemon:
-- pkg5: name=service/network/finger state=absent
+- pkg5:
+    name: service/network/finger
+    state: absent
 
 # Install several packages at once:
 - pkg5:
@@ -165,4 +172,6 @@ def is_latest(module, package):
 
 
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

@@ -30,6 +30,10 @@ from ansible.module_utils.univention_umc import (
 )
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: udm_share
@@ -375,10 +379,11 @@ options:
 
 EXAMPLES = '''
 # Create a share named home on the server ucs.example.com with the path /home.
-- udm_share: name=home
-             path=/home
-             host=ucs.example.com
-             sambaName=Home
+- udm_share:
+    name: home
+    path: /home
+    host: ucs.example.com
+    sambaName: Home
 '''
 
 

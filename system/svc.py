@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: svc
@@ -67,22 +71,35 @@ options:
 
 EXAMPLES = '''
 # Example action to start svc dnscache, if not running
- - svc: name=dnscache state=started
+ - svc:
+    name: dnscache
+    state: started
 
 # Example action to stop svc dnscache, if running
- - svc: name=dnscache state=stopped
+ - svc:
+    name: dnscache
+    state: stopped
 
 # Example action to kill svc dnscache, in all cases
- - svc : name=dnscache state=killed
+ - svc:
+    name: dnscache
+    state: killed
 
 # Example action to restart svc dnscache, in all cases
- - svc : name=dnscache state=restarted
+ - svc:
+    name: dnscache
+    state: restarted
 
 # Example action to reload svc dnscache, in all cases
- - svc: name=dnscache state=reloaded
+ - svc:
+    name: dnscache
+    state: reloaded
 
 # Example using alt svc directory location
- - svc: name=dnscache state=reloaded service_dir=/var/service
+ - svc:
+    name: dnscache
+    state: reloaded
+    service_dir: /var/service
 '''
 
 import platform
@@ -299,4 +316,5 @@ def main():
 
 
 
-main()
+if __name__ == '__main__':
+    main()

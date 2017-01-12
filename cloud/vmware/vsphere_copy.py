@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: vsphere_copy
@@ -70,9 +74,23 @@ notes:
 '''
 
 EXAMPLES = '''
-- vsphere_copy: host=vhost login=vuser password=vpass src=/some/local/file datacenter='DC1 Someplace' datastore=datastore1 path=some/remote/file
+- vsphere_copy:
+    host: vhost
+    login: vuser
+    password: vpass
+    src: /some/local/file
+    datacenter: DC1 Someplace
+    datastore: datastore1
+    path: some/remote/file
   transport: local
-- vsphere_copy: host=vhost login=vuser password=vpass src=/other/local/file datacenter='DC2 Someplace' datastore=datastore2 path=other/remote/file
+- vsphere_copy:
+    host: vhost
+    login: vuser
+    password: vpass
+    src: /other/local/file
+    datacenter: DC2 Someplace
+    datastore: datastore2
+    path: other/remote/file
   delegate_to: other_system
 '''
 

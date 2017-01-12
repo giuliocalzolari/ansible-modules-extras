@@ -20,6 +20,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: pear
@@ -45,16 +49,24 @@ options:
 
 EXAMPLES = '''
 # Install pear package
-- pear: name=Net_URL2 state=present
+- pear:
+    name: Net_URL2
+    state: present
 
 # Install pecl package
-- pear: name=pecl/json_post state=present
+- pear:
+    name: pecl/json_post
+    state: present
 
 # Upgrade package
-- pear: name=Net_URL2 state=latest
+- pear:
+    name: Net_URL2
+    state: latest
 
 # Remove packages
-- pear: name=Net_URL2,pecl/json_post state=absent
+- pear:
+    name: Net_URL2,pecl/json_post
+    state: absent
 '''
 
 import os
@@ -224,4 +236,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()

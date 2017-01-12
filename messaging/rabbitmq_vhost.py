@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: rabbitmq_vhost
@@ -55,7 +59,9 @@ options:
 
 EXAMPLES = '''
 # Ensure that the vhost /test exists.
-- rabbitmq_vhost: name=/test state=present
+- rabbitmq_vhost:
+    name: /test
+    state: present
 '''
 
 class RabbitMqVhost(object):
@@ -144,4 +150,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

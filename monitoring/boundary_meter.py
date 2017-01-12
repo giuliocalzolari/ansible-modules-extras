@@ -22,18 +22,9 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
-
-import datetime
-import base64
-import os
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 
@@ -88,15 +79,33 @@ EXAMPLES='''
 
 '''
 
+import base64
+import os
+
+try:
+    import json
+except ImportError:
+    try:
+        import simplejson as json
+    except ImportError:
+        # Let snippet from module_utils/basic.py return a proper error in this case
+        pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+
+
 api_host = "api.boundary.com"
 config_directory = "/etc/bprobe"
+
 
 # "resource" like thing or apikey?
 def auth_encode(apikey):
     auth = base64.standard_b64encode(apikey)
     auth.replace("\n", "")
     return auth
-    
+
+
 def build_url(name, apiid, action, meter_id=None, cert_type=None):
     if action == "create":
         return 'https://%s/%s/meters' % (api_host, apiid)
@@ -198,7 +207,7 @@ def delete_meter(module, name, apiid, apikey):
             try:
                 cert_file = '%s/%s.pem' % (config_directory,cert_type)
                 os.remove(cert_file)
-            except OSError, e:  
+            except OSError:
                 module.fail_json("Failed to remove " + cert_type + ".pem file")
 
     return 0, "Meter " + name + " deleted"
@@ -221,7 +230,7 @@ def download_request(module, name, apiid, apikey, cert_type):
                 cert_file.write(body)
                 cert_file.close()
                 os.chmod(cert_file_path, int('0600', 8))
-            except: 
+            except:
                 module.fail_json("Could not write to certificate file")
 
         return True
@@ -256,9 +265,7 @@ def main():
 
     module.exit_json(status=result,changed=True)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+
 if __name__ == '__main__':
     main()
 

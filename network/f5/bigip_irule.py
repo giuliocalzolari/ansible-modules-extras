@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: bigip_irule
@@ -202,7 +206,7 @@ class BigIpiRule(object):
             )
 
         if hasattr(r, 'apiAnonymous'):
-            p['content'] = str(r.apiAnonymous)
+            p['content'] = str(r.apiAnonymous.strip())
         p['name'] = name
         return p
 
@@ -246,14 +250,10 @@ class BigIpiRule(object):
             )
 
     def present(self):
-        changed = False
-
         if self.exists():
-            changed = self.update()
+            return self.update()
         else:
-            changed = self.create()
-
-        return changed
+            return self.create()
 
     def update(self):
         params = dict()
@@ -267,6 +267,7 @@ class BigIpiRule(object):
         module = self.params['module']
 
         if content is not None:
+            content = content.strip()
             if 'content' in current:
                 if content != current['content']:
                     params['apiAnonymous'] = content
@@ -318,7 +319,7 @@ class BigIpiRule(object):
             return True
 
         if content is not None:
-            params['apiAnonymous'] = content
+            params['apiAnonymous'] = content.strip()
 
         params['name'] = name
         params['partition'] = partition

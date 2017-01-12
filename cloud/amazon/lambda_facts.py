@@ -25,6 +25,10 @@ except ImportError:
     HAS_BOTO3 = False
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: lambda_facts
@@ -82,7 +86,8 @@ EXAMPLES = '''
     query: all
     max_items: 20
 - name: show Lambda facts
-  debug: var=lambda_facts
+  debug:
+    var: lambda_facts
 '''
 
 RETURN = '''

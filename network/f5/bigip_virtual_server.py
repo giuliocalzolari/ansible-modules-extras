@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: bigip_virtual_server
@@ -102,12 +106,22 @@ options:
     description:
       - Source network address policy
     required: false
+    choices:
+      - None
+      - Automap
+      - Name of a SNAT pool (eg "/Common/snat_pool_name") to enable SNAT with the specific pool
     default: None
   default_persistence_profile:
     description:
       - Default Profile which manages the session persistence
     required: false
     default: None
+  route_advertisement_state:
+    description:
+      - Enable route advertisement for destination
+    required: false
+    default: disabled
+    version_added: "2.3"
   description:
     description:
       - Virtual server description
@@ -355,6 +369,7 @@ def set_snat(api, name, snat):
     updated = False
     try:
         current_state = get_snat_type(api, name)
+        current_snat_pool = get_snat_pool(api, name)
         if snat is None:
             return updated
         elif snat == 'None' and current_state != 'SRC_TRANS_NONE':
@@ -367,6 +382,11 @@ def set_snat(api, name, snat):
                 virtual_servers=[name]
             )
             updated = True
+        elif snat_settings_need_updating(snat, current_state, current_snat_pool):
+            api.LocalLB.VirtualServer.set_source_address_translation_snat_pool(
+                virtual_servers=[name],
+                pools=[snat]
+            )
         return updated
     except bigsuds.OperationFailed as e:
         raise Exception('Error on setting snat : %s' % e)
@@ -376,6 +396,23 @@ def get_snat_type(api, name):
     return api.LocalLB.VirtualServer.get_source_address_translation_type(
         virtual_servers=[name]
     )[0]
+
+
+def get_snat_pool(api, name):
+    return api.LocalLB.VirtualServer.get_source_address_translation_snat_pool(
+        virtual_servers=[name]
+    )[0]
+
+
+def snat_settings_need_updating(snat, current_state, current_snat_pool):
+    if snat == 'None' or snat == 'Automap':
+        return False
+    elif snat and current_state != 'SRC_TRANS_SNATPOOL':
+        return True
+    elif snat and current_state == 'SRC_TRANS_SNATPOOL' and current_snat_pool != snat:
+        return True
+    else:
+        return False
 
 
 def get_pool(api, name):
@@ -513,6 +550,27 @@ def set_default_persistence_profiles(api, name, persistence_profile):
         raise Exception('Error on setting default persistence profile : %s' % e)
 
 
+def get_route_advertisement_status(api, address):
+    result = api.LocalLB.VirtualAddressV2.get_route_advertisement_state(virtual_addresses=[address]).pop(0)
+    result = result.split("STATE_")[-1].lower()
+    return result
+
+
+def set_route_advertisement_state(api, destination, partition, route_advertisement_state):
+    updated = False
+
+    try:
+        state = "STATE_%s" % route_advertisement_state.strip().upper()
+        address = fq_name(partition, destination,)
+        current_route_advertisement_state=get_route_advertisement_status(api,address)
+        if current_route_advertisement_state != route_advertisement_state:
+            api.LocalLB.VirtualAddressV2.set_route_advertisement_state(virtual_addresses=[address], states=[state])
+            updated = True
+        return updated
+    except bigsuds.OperationFailed as e:
+        raise Exception('Error on setting profiles : %s' % e)
+
+
 def main():
     argument_spec = f5_argument_spec()
     argument_spec.update(dict(
@@ -527,6 +585,7 @@ def main():
         pool=dict(type='str'),
         description=dict(type='str'),
         snat=dict(type='str'),
+        route_advertisement_state=dict(type='str', default='disabled', choices=['enabled', 'disabled']),
         default_persistence_profile=dict(type='str')
     ))
 
@@ -566,6 +625,7 @@ def main():
     pool = fq_name(partition, module.params['pool'])
     description = module.params['description']
     snat = module.params['snat']
+    route_advertisement_state = module.params['route_advertisement_state']
     default_persistence_profile = fq_name(partition, module.params['default_persistence_profile'])
 
     if 1 > port > 65535:
@@ -612,6 +672,7 @@ def main():
                         set_description(api, name, description)
                         set_default_persistence_profiles(api, name, default_persistence_profile)
                         set_state(api, name, state)
+                        set_route_advertisement_state(api, destination, partition, route_advertisement_state)
                         result = {'changed': True}
                     except bigsuds.OperationFailed as e:
                         raise Exception('Error on creating Virtual Server : %s' % e)
@@ -636,6 +697,7 @@ def main():
                         result['changed'] |= set_rules(api, name, all_rules)
                         result['changed'] |= set_default_persistence_profiles(api, name, default_persistence_profile)
                         result['changed'] |= set_state(api, name, state)
+                        result['changed'] |= set_route_advertisement_state(api, destination, partition, route_advertisement_state)
                         api.System.Session.submit_transaction()
                     except Exception as e:
                         raise Exception("Error on updating Virtual Server : %s" % e)

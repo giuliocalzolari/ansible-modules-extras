@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: rabbitmq_policy
@@ -74,13 +78,19 @@ options:
 
 EXAMPLES = '''
 - name: ensure the default vhost contains the HA policy via a dict
-  rabbitmq_policy: name=HA pattern='.*'
+  rabbitmq_policy:
+    name: HA
+    pattern: .*
   args:
     tags:
-      "ha-mode": all
+      ha-mode: all
 
 - name: ensure the default vhost contains the HA policy
-  rabbitmq_policy: name=HA pattern='.*' tags="ha-mode=all"
+  rabbitmq_policy:
+    name: HA
+    pattern: .*
+    tags:
+      - ha-mode: all
 '''
 class RabbitMqPolicy(object):
     def __init__(self, module, name):
@@ -165,4 +175,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

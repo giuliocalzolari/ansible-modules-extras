@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: locale_gen
@@ -41,7 +45,9 @@ options:
 
 EXAMPLES = '''
 # Ensure a locale exists.
-- locale_gen: name=de_CH.UTF-8 state=present
+- locale_gen:
+    name: de_CH.UTF-8
+    state: present
 '''
 
 import os
@@ -98,7 +104,7 @@ def is_present(name):
 def fix_case(name):
     """locale -a might return the encoding in either lower or upper case.
     Passing through this function makes them uniform for comparisons."""
-    for s, r in LOCALE_NORMALIZATION.iteritems():
+    for s, r in LOCALE_NORMALIZATION.items():
         name = name.replace(s, r)
     return name
 
@@ -236,4 +242,5 @@ def main():
         module.exit_json(name=name, changed=changed, msg="OK")
 
 
-main()
+if __name__ == '__main__':
+    main()

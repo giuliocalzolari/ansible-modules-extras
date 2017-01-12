@@ -25,10 +25,14 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: archive
-version_added: 2.2
+version_added: 2.3
 short_description: Creates a compressed archive of one or more files or trees.
 extends_documentation_fragment: files
 description:
@@ -63,13 +67,19 @@ notes:
 
 EXAMPLES = '''
 # Compress directory /path/to/foo/ into /path/to/foo.tgz
-- archive: path=/path/to/foo dest=/path/to/foo.tgz
+- archive:
+    path: /path/to/foo
+    dest: /path/to/foo.tgz
 
 # Compress regular file /path/to/foo into /path/to/foo.gz and remove it
-- archive: path=/path/to/foo remove=True
+- archive:
+    path: /path/to/foo
+    remove: True
 
 # Create a zip archive of /path/to/foo
-- archive: path=/path/to/foo format=zip
+- archive:
+    path: /path/to/foo
+    format: zip
 
 # Create a bz2 archive of multiple files, rooted at /path
 - archive:
@@ -245,6 +255,7 @@ def main():
                     elif format == 'tar':
                         arcfile = tarfile.open(dest, 'w')
 
+                    match_root = re.compile('^%s' % re.escape(arcroot))
                     for path in archive_paths:
                         if os.path.isdir(path):
                             # Recurse into directories
@@ -254,7 +265,7 @@ def main():
 
                                 for dirname in dirnames:
                                     fullpath = dirpath + dirname
-                                    arcname = fullpath[len(arcroot):]
+                                    arcname = match_root.sub('', fullpath)
 
                                     try:
                                         if format == 'zip':
@@ -268,7 +279,7 @@ def main():
 
                                 for filename in filenames:
                                     fullpath = dirpath + filename
-                                    arcname = fullpath[len(arcroot):]
+                                    arcname = match_root.sub('', fullpath)
 
                                     if not filecmp.cmp(fullpath, dest):
                                         try:
@@ -283,9 +294,9 @@ def main():
                                             errors.append('Adding %s: %s' % (path, str(e)))
                         else:
                             if format == 'zip':
-                                arcfile.write(path, path[len(arcroot):])
+                                arcfile.write(path, match_root.sub('', path))
                             else:
-                                arcfile.add(path, path[len(arcroot):], recursive=False)
+                                arcfile.add(path, match_root.sub('', path), recursive=False)
 
                             successes.append(path)
 

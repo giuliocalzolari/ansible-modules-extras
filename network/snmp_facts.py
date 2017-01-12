@@ -16,6 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: snmp_facts
@@ -72,19 +76,22 @@ options:
 
 EXAMPLES = '''
 # Gather facts with SNMP version 2
-- snmp_facts: host={{ inventory_hostname }} version=2c community=public
-  connection: local
+- snmp_facts:
+    host: '{{ inventory_hostname }}'
+    version: 2c
+    community: public
+  delegate_to: local
 
 # Gather facts using SNMP version 3
 - snmp_facts:
-    host={{ inventory_hostname }}
-    version=v3
-    level=authPriv
-    integrity=sha
-    privacy=aes
-    username=snmp-user
-    authkey=abc12345
-    privkey=def6789
+    host: '{{ inventory_hostname }}'
+    version: v3
+    level: authPriv
+    integrity: sha
+    privacy: aes
+    username: snmp-user
+    authkey: abc12345
+    privkey: def6789
   delegate_to: localhost
 '''
 
@@ -153,7 +160,7 @@ def lookup_adminstatus(int_adminstatus):
                             2: 'down',
                             3: 'testing'
                           }
-    if int_adminstatus in adminstatus_options.keys():
+    if int_adminstatus in adminstatus_options:
         return adminstatus_options[int_adminstatus]
     else:
         return ""
@@ -168,7 +175,7 @@ def lookup_operstatus(int_operstatus):
                            6: 'notPresent',
                            7: 'lowerLayerDown'
                          }
-    if int_operstatus in operstatus_options.keys():
+    if int_operstatus in operstatus_options:
         return operstatus_options[int_operstatus]
     else:
         return ""
@@ -364,4 +371,5 @@ def main():
     module.exit_json(ansible_facts=results)
 
 
-main()
+if __name__ == '__main__':
+    main()

@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: lxd_container
@@ -179,10 +183,10 @@ EXAMPLES = '''
 - hosts: localhost
   connection: local
   tasks:
-    - name: Restart a container
+    - name: Delete a container
       lxd_container:
         name: mycontainer
-        state: restarted
+        state: absent
 
 # An example for restarting a container
 - hosts: localhost

@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: bigip_routedomain
@@ -46,12 +50,13 @@ options:
       - The unique identifying integer representing the route domain.
     required: true
   parent:
-    description: |
+    description:
       Specifies the route domain the system searches when it cannot
       find a route in the configured domain.
+    required: false
   routing_protocol:
     description:
-      -  Dynamic routing protocols for the system to use in the route domain.
+      - Dynamic routing protocols for the system to use in the route domain.
     choices:
       - BFD
       - BGP

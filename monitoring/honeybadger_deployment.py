@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: honeybadger_deployment
@@ -67,11 +71,12 @@ requirements: []
 '''
 
 EXAMPLES = '''
-- honeybadger_deployment: token=AAAAAA
-                          environment='staging'
-                          user='ansible'
-                          revision=b6826b8
-                          repo=git@github.com:user/repo.git
+- honeybadger_deployment:
+    token: AAAAAA
+    environment: staging
+    user: ansible
+    revision: b6826b8
+    repo: 'git@github.com:user/repo.git'
 '''
 
 RETURN = '''# '''

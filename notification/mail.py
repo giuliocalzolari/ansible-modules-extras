@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'committer',
+                    'version': '1.0'}
+
 DOCUMENTATION = """
 ---
 author: "Dag Wieers (@dagwieers)" 
@@ -120,37 +124,42 @@ options:
 
 EXAMPLES = '''
 # Example playbook sending mail to root
-- local_action: mail subject='System {{ ansible_hostname }} has been successfully provisioned.'
+- mail:
+    subject: 'System {{ ansible_hostname }} has been successfully provisioned.'
+  delegate_to: localhost
 
 # Sending an e-mail using Gmail SMTP servers
-- local_action: mail
-                host='smtp.gmail.com'
-                port=587
-                username=username@gmail.com
-                password='mysecret'
-                to="John Smith <john.smith@example.com>"
-                subject='Ansible-report'
-                body='System {{ ansible_hostname }} has been successfully provisioned.'
+- mail:
+    host: smtp.gmail.com
+    port: 587
+    username: username@gmail.com
+    password: mysecret
+    to: John Smith <john.smith@example.com>
+    subject: Ansible-report
+    body: 'System {{ ansible_hostname }} has been successfully provisioned.'
+  delegate_to: localhost
 
 # Send e-mail to a bunch of users, attaching files
-- local_action: mail
-                host='127.0.0.1'
-                port=2025
-                subject="Ansible-report"
-                body="Hello, this is an e-mail. I hope you like it ;-)"
-                from="jane@example.net (Jane Jolie)"
-                to="John Doe <j.d@example.org>, Suzie Something <sue@example.com>"
-                cc="Charlie Root <root@localhost>"
-                attach="/etc/group /tmp/pavatar2.png"
-                headers=Reply-To=john@example.com|X-Special="Something or other"
-                charset=utf8
+- mail:
+    host: 127.0.0.1
+    port: 2025
+    subject: Ansible-report
+    body: Hello, this is an e-mail. I hope you like it ;-)
+    from: jane@example.net (Jane Jolie)
+    to: John Doe <j.d@example.org>, Suzie Something <sue@example.com>
+    cc: Charlie Root <root@localhost>
+    attach: /etc/group /tmp/pavatar2.png
+    headers: 'Reply-To=john@example.com|X-Special="Something or other"'
+    charset: utf8
+  delegate_to: localhost
+
 # Sending an e-mail using the remote machine, not the Ansible controller node
 - mail:
-    host='localhost'
-    port=25
-    to="John Smith <john.smith@example.com>"
-    subject='Ansible-report'
-    body='System {{ ansible_hostname }} has been successfully provisioned.'
+    host: localhost
+    port: 25
+    to: John Smith <john.smith@example.com>
+    subject: Ansible-report
+    body: 'System {{ ansible_hostname }} has been successfully provisioned.'
 '''
 
 import os
@@ -218,7 +227,8 @@ def main():
             smtp = smtplib.SMTP_SSL(host, port=int(port))
         except (smtplib.SMTPException, ssl.SSLError):
             smtp = smtplib.SMTP(host, port=int(port))
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(rc=1, msg='Failed to send mail to server %s on port %s: %s' % (host, port, e))
 
     smtp.ehlo()
@@ -283,14 +293,16 @@ def main():
 
                 part.add_header('Content-disposition', 'attachment', filename=os.path.basename(file))
                 msg.attach(part)
-            except Exception, e:
+            except Exception:
+                e = get_exception()
                 module.fail_json(rc=1, msg="Failed to send mail: can't attach file %s: %s" % (file, e))
 
     composed = msg.as_string()
 
     try:
         smtp.sendmail(sender_addr, set(addr_list), composed)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(rc=1, msg='Failed to send mail to %s: %s' % (", ".join(addr_list), e))
 
     smtp.quit()
@@ -299,4 +311,7 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+from ansible.module_utils.pycompat24 import get_exception
+
+if __name__ == '__main__':
+    main()

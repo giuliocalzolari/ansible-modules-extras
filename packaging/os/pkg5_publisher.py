@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: pkg5_publisher
@@ -66,10 +70,15 @@ options:
 '''
 EXAMPLES = '''
 # Fetch packages for the solaris publisher direct from Oracle:
-- pkg5_publisher: name=solaris sticky=true origin=https://pkg.oracle.com/solaris/support/
+- pkg5_publisher:
+    name: solaris
+    sticky: true
+    origin: https://pkg.oracle.com/solaris/support/
 
 # Configure a publisher for locally-produced packages:
-- pkg5_publisher: name=site origin=https://pkg.example.com/site/
+- pkg5_publisher:
+    name: site
+    origin: 'https://pkg.example.com/site/'
 '''
 
 def main():
@@ -198,4 +207,6 @@ def unstringify(val):
 
 
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

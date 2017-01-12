@@ -19,6 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ipadm_if
@@ -50,10 +54,14 @@ options:
 
 EXAMPLES = '''
 # Create vnic0 interface
-ipadm_if: name=vnic0 state=enabled
+- ipadm_if:
+    name: vnic0
+    state: enabled
 
 # Disable vnic0 interface
-ipadm_if: name=vnic0 state=disabled
+- ipadm_if:
+    name: vnic0
+    state: disabled
 '''
 
 RETURN = '''
@@ -219,4 +227,6 @@ def main():
     module.exit_json(**result)
 
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

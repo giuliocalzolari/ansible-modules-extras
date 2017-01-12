@@ -15,12 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 author:
   - "Jens Carl (@j-carl), Hothead Games Inc."
 module: redshift_subnet_group
-version_added: "2.1"
+version_added: "2.2"
 short_description: mange Redshift cluster subnet groups
 description:
   - Create, modifies, and deletes Redshift cluster subnet groups.
@@ -82,7 +86,7 @@ group:
         vpc_id:
             description: Id of the VPC where the subnet is located
             returned: success
-            type: stering
+            type: string
             sample: "vpc-aabb1122"
 '''
 

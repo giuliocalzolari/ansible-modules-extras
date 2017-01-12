@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 
 module: pagerduty
@@ -117,43 +121,54 @@ options:
 
 EXAMPLES='''
 # List ongoing maintenance windows using a user/passwd
-- pagerduty: name=companyabc user=example@example.com passwd=password123 state=ongoing
+- pagerduty:
+    name: companyabc
+    user: example@example.com
+    passwd: password123
+    state: ongoing
 
 # List ongoing maintenance windows using a token
-- pagerduty: name=companyabc token=xxxxxxxxxxxxxx state=ongoing
+- pagerduty:
+    name: companyabc
+    token: xxxxxxxxxxxxxx
+    state: ongoing
 
 # Create a 1 hour maintenance window for service FOO123, using a user/passwd
-- pagerduty: name=companyabc
-             user=example@example.com
-             passwd=password123
-             state=running
-             service=FOO123
+- pagerduty:
+    name: companyabc
+    user: example@example.com
+    passwd: password123
+    state: running
+    service: FOO123
 
 # Create a 5 minute maintenance window for service FOO123, using a token
-- pagerduty: name=companyabc
-             token=xxxxxxxxxxxxxx
-             hours=0
-             minutes=5
-             state=running
-             service=FOO123
+- pagerduty:
+    name: companyabc
+    token: xxxxxxxxxxxxxx
+    hours: 0
+    minutes: 5
+    state: running
+    service: FOO123
 
 
 # Create a 4 hour maintenance window for service FOO123 with the description "deployment".
-- pagerduty: name=companyabc
-             user=example@example.com
-             passwd=password123
-             state=running
-             service=FOO123
-             hours=4
-             desc=deployment
+- pagerduty:
+    name: companyabc
+    user: example@example.com
+    passwd: password123
+    state: running
+    service: FOO123
+    hours: 4
+    desc: deployment
   register: pd_window
 
 # Delete the previous maintenance window
-- pagerduty: name=companyabc
-             user=example@example.com
-             passwd=password123
-             state=absent
-             service={{ pd_window.result.maintenance_window.id }}
+- pagerduty:
+    name: companyabc
+    user: example@example.com
+    passwd: password123
+    state: absent
+    service: '{{ pd_window.result.maintenance_window.id }}'
 '''
 
 import datetime
@@ -203,7 +218,7 @@ def create(module, name, user, passwd, token, requester_id, service, hours, minu
 
     data = json.dumps(request_data)
     response, info = fetch_url(module, url, data=data, headers=headers, method='POST')
-    if info['status'] != 200:
+    if info['status'] != 201:
         module.fail_json(msg="failed to create the window: %s" % info['msg'])
 
     try:
@@ -229,7 +244,7 @@ def absent(module, name, user, passwd, token, requester_id, service):
 
     data = json.dumps(request_data)
     response, info = fetch_url(module, url, data=data, headers=headers, method='DELETE')
-    if info['status'] != 200:
+    if info['status'] != 204:
         module.fail_json(msg="failed to delete the window: %s" % info['msg'])
 
     try:
@@ -296,4 +311,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
 
-main()
+if __name__ == '__main__':
+    main()

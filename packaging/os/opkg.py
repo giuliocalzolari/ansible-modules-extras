@@ -17,6 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: opkg
@@ -52,11 +56,27 @@ options:
 notes:  []
 '''
 EXAMPLES = '''
-- opkg: name=foo state=present
-- opkg: name=foo state=present update_cache=yes
-- opkg: name=foo state=absent
-- opkg: name=foo,bar state=absent
-- opkg: name=foo state=present force=overwrite
+- opkg:
+    name: foo
+    state: present
+
+- opkg:
+    name: foo
+    state: present
+    update_cache: yes
+
+- opkg:
+    name: foo
+    state: absent
+
+- opkg:
+    name: foo,bar
+    state: absent
+
+- opkg:
+    name: foo
+    state: present
+    force: overwrite
 '''
 
 import pipes
@@ -166,4 +186,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()

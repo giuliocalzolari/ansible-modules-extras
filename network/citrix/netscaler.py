@@ -21,6 +21,10 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: netscaler
@@ -87,13 +91,26 @@ author: "Nandor Sivok (@dominis)"
 
 EXAMPLES = '''
 # Disable the server
-ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=apipass"
+- netscaler:
+    nsc_host: nsc.example.com
+    user: apiuser
+    password: apipass
 
 # Enable the server
-ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=apipass action=enable"
+- netscaler:
+    nsc_host: nsc.example.com
+    user: apiuser
+    password: apipass
+    action: enable
 
 # Disable the service local:8080
-ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=apipass name=local:8080 type=service action=disable"
+- netscaler:
+    nsc_host: nsc.example.com
+    user: apiuser
+    password: apipass
+    name: 'local:8080'
+    type: service
+    action: disable
 '''
 
 
@@ -173,7 +190,8 @@ def main():
     rc = 0
     try:
         rc, result = core(module)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg=str(e))
 
     if rc != 0:
@@ -186,4 +204,7 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
-main()
+from ansible.module_utils.pycompat24 import get_exception
+
+if __name__ == '__main__':
+    main()

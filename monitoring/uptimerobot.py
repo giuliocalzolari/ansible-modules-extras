@@ -15,6 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 
 module: uptimerobot
@@ -53,15 +57,16 @@ notes:
 
 EXAMPLES = '''
 # Pause the monitor with an ID of 12345.
-- uptimerobot: monitorid=12345
-           apikey=12345-1234512345
-           state=paused
+- uptimerobot:
+    monitorid: 12345
+    apikey: 12345-1234512345
+    state: paused
 
 # Start the monitor with an ID of 12345.
-- uptimerobot: monitorid=12345
-           apikey=12345-1234512345
-           state=started
-
+- uptimerobot:
+    monitorid: 12345
+    apikey: 12345-1234512345
+    state: started
 '''
 
 try:

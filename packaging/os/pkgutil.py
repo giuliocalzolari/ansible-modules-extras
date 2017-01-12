@@ -21,6 +21,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: pkgutil 
@@ -60,10 +64,15 @@ options:
 
 EXAMPLES = '''
 # Install a package
-pkgutil: name=CSWcommon state=present
+- pkgutil:
+    name: CSWcommon
+    state: present
 
 # Install a package from a specific repository
-pkgutil: name=CSWnrpe site='ftp://myinternal.repo/opencsw/kiel state=latest'
+- pkgutil:
+    name: CSWnrpe
+    site: 'ftp://myinternal.repo/opencsw/kiel'
+    state: latest
 '''
 
 import os
@@ -220,4 +229,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

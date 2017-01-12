@@ -19,6 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: zabbix_group
@@ -136,7 +140,7 @@ class HostGroup(object):
                     except Already_Exists:
                         return group_add_list
             return group_add_list
-        except Exception, e:
+        except Exception as e:
             self._module.fail_json(msg="Failed to create host group(s): %s" % e)
 
     # delete host group(s)
@@ -145,7 +149,7 @@ class HostGroup(object):
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
             self._zapi.hostgroup.delete(group_ids)
-        except Exception, e:
+        except Exception as e:
             self._module.fail_json(msg="Failed to delete host group(s), Exception: %s" % e)
 
     # get group ids by name
@@ -192,7 +196,7 @@ def main():
     try:
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password)
         zbx.login(login_user, login_password)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
     hostGroup = HostGroup(module, zbx)
@@ -222,4 +226,6 @@ def main():
             module.exit_json(changed=False)
 
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

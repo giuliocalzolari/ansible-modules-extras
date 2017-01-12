@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'committer',
+                    'version': '1.0'}
+
 DOCUMENTATION = """
 ---
 module: sqs_queue
@@ -81,6 +85,41 @@ extends_documentation_fragment:
     - ec2
 """
 
+RETURN = '''
+default_visibility_timeout: 
+    description: The default visibility timeout in seconds.
+    returned: always
+    sample: 30
+delivery_delay: 
+    description: The delivery delay in seconds.
+    returned: always
+    sample: 0
+maximum_message_size: 
+    description: The maximum message size in bytes.
+    returned: always
+    sample: 262144
+message_retention_period: 
+    description: The message retention period in seconds.
+    returned: always
+    sample: 345600
+name:
+    description: Name of the SQS Queue
+    returned: always
+    sample: "queuename-987d2de0"
+queue_arn:
+    description: The queue's Amazon resource name (ARN).
+    returned: on successful creation or update of the queue
+    sample: 'arn:aws:sqs:us-east-1:199999999999:queuename-987d2de0'
+receive_message_wait_time: 
+    description: The receive message wait time in seconds.
+    returned: always
+    sample: 0
+region:
+    description: Region that the queue was created within
+    returned: always
+    sample: 'us-east-1'
+'''
+
 EXAMPLES = '''
 # Create SQS queue with redrive policy
 - sqs_queue:
@@ -103,6 +142,9 @@ EXAMPLES = '''
     state: absent
 '''
 
+import json
+import traceback
+
 try:
     import boto.sqs
     from boto.exception import BotoServerError, NoAuthHandlerFound
@@ -110,6 +152,9 @@ try:
 
 except ImportError:
     HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
 
 
 def create_or_update_sqs_queue(connection, module):
@@ -134,16 +179,23 @@ def create_or_update_sqs_queue(connection, module):
     try:
         queue = connection.get_queue(queue_name)
         if queue:
-            # Update existing
+            # Update existing            
             result['changed'] = update_sqs_queue(queue, check_mode=module.check_mode, **queue_attributes)
-
         else:
             # Create new
             if not module.check_mode:
                 queue = connection.create_queue(queue_name)
                 update_sqs_queue(queue, **queue_attributes)
             result['changed'] = True
-
+        
+        if not module.check_mode:
+            result['queue_arn'] = queue.get_attributes('QueueArn')['QueueArn']
+            result['default_visibility_timeout'] = queue.get_attributes('VisibilityTimeout')['VisibilityTimeout']
+            result['message_retention_period'] = queue.get_attributes('MessageRetentionPeriod')['MessageRetentionPeriod']
+            result['maximum_message_size'] = queue.get_attributes('MaximumMessageSize')['MaximumMessageSize']
+            result['delivery_delay'] = queue.get_attributes('DelaySeconds')['DelaySeconds']
+            result['receive_message_wait_time'] = queue.get_attributes('ReceiveMessageWaitTimeSeconds')['ReceiveMessageWaitTimeSeconds']
+          
     except BotoServerError:
         result['msg'] = 'Failed to create/update sqs queue due to error: ' + traceback.format_exc()
         module.fail_json(**result)
@@ -255,7 +307,7 @@ def main():
     try:
         connection = connect_to_aws(boto.sqs, region, **aws_connect_params)
 
-    except (NoAuthHandlerFound, AnsibleAWSError), e:
+    except (NoAuthHandlerFound, AnsibleAWSError) as e:
         module.fail_json(msg=str(e))
 
     state = module.params.get('state')
@@ -264,10 +316,6 @@ def main():
     elif state == 'absent':
         delete_sqs_queue(connection, module)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

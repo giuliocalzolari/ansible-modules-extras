@@ -26,6 +26,10 @@ import sqlite3
 
 from distutils.version import StrictVersion
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: openbsd_pkg
@@ -68,28 +72,45 @@ options:
 
 EXAMPLES = '''
 # Make sure nmap is installed
-- openbsd_pkg: name=nmap state=present
+- openbsd_pkg:
+    name: nmap
+    state: present
 
 # Make sure nmap is the latest version
-- openbsd_pkg: name=nmap state=latest
+- openbsd_pkg:
+    name: nmap
+    state: latest
 
 # Make sure nmap is not installed
-- openbsd_pkg: name=nmap state=absent
+- openbsd_pkg:
+    name: nmap
+    state: absent
 
 # Make sure nmap is installed, build it from source if it is not
-- openbsd_pkg: name=nmap state=present build=yes
+- openbsd_pkg:
+    name: nmap
+    state: present
+    build: yes
 
 # Specify a pkg flavour with '--'
-- openbsd_pkg: name=vim--no_x11 state=present
+- openbsd_pkg:
+    name: vim--no_x11
+    state: present
 
 # Specify the default flavour to avoid ambiguity errors
-- openbsd_pkg: name=vim-- state=present
+- openbsd_pkg:
+    name: vim--
+    state: present
 
 # Specify a package branch (requires at least OpenBSD 6.0)
-- openbsd_pkg: name=python%3.5 state=present
+- openbsd_pkg:
+    name: python%3.5
+    state: present
 
 # Update all packages on the system
-- openbsd_pkg: name=* state=latest
+- openbsd_pkg:
+    name: *
+    state: latest
 '''
 
 # Function used for executing commands.
@@ -176,11 +197,14 @@ def package_present(name, installed_state, pkg_spec, module):
                 # "file:/local/package/directory/ is empty" message on stderr
                 # while still installing the package, so we need to look for
                 # for a message like "packagename-1.0: ok" just in case.
-                match = re.search("\W%s-[^:]+: ok\W" % name, stdout)
+                if pkg_spec['style'] == 'branch':
+                    match = re.search("\W%s-[^:]+: ok\W" % pkg_spec['pkgname'], stdout)
+                else:
+                    match = re.search("\W%s-[^:]+: ok\W" % name, stdout)
+
                 if match:
                     # It turns out we were able to install the package.
-                    module.debug("package_present(): we were able to install package")
-                    pass
+                    module.debug("package_present(): we were able to install the package")
                 else:
                     # We really did fail, fake the return code.
                     module.debug("package_present(): we really did fail")
@@ -353,6 +377,10 @@ def parse_package_name(name, pkg_spec, module):
 
         pkg_spec['style'] = 'branch'
 
+        # Key names from description in pkg_add(1).
+        pkg_spec['pkgname'] = pkg_spec['stem'].split('%')[0]
+        pkg_spec['branch'] = pkg_spec['stem'].split('%')[1]
+
     # Sanity check that there are no trailing dashes in flavor.
     # Try to stop strange stuff early so we can be strict later.
     if pkg_spec['flavor']:
@@ -519,4 +547,6 @@ def main():
 
 # Import module snippets.
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

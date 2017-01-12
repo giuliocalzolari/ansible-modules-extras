@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: cloudformation_facts
@@ -68,7 +72,8 @@ EXAMPLES = '''
     stack_name: my-cloudformation-stack
 
 # Facts are published in ansible_facts['cloudformation'][<stack_name>]
-- debug: msg={{ ansible_facts['cloudformation']['my-cloudformation-stack'] }}
+- debug:
+    msg: '{{ ansible_facts['cloudformation']['my-cloudformation-stack'] }}'
 
 # Get all stack information about a stack
 - cloudformation_facts:

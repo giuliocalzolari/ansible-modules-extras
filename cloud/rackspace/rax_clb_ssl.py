@@ -16,6 +16,10 @@
 
 # This is a DOCUMENTATION stub specific to this module, it extends
 # a documentation fragment located in ansible.utils.module_docs_fragments
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION='''
 module: rax_clb_ssl
 short_description: Manage SSL termination for a Rackspace Cloud Load Balancer.
@@ -156,7 +160,7 @@ def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
         if needs_change:
             try:
                 balancer.add_ssl_termination(**ssl_attrs)
-            except pyrax.exceptions.PyraxException, e:
+            except pyrax.exceptions.PyraxException as e:
                 module.fail_json(msg='%s' % e.message)
             changed = True
     elif state == 'absent':
@@ -164,7 +168,7 @@ def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
         if existing_ssl:
             try:
                 balancer.delete_ssl_termination()
-            except pyrax.exceptions.PyraxException, e:
+            except pyrax.exceptions.PyraxException as e:
                 module.fail_json(msg='%s' % e.message)
             changed = True
 
@@ -176,7 +180,7 @@ def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
 
         try:
             balancer.update(httpsRedirect=https_redirect)
-        except pyrax.exceptions.PyraxException, e:
+        except pyrax.exceptions.PyraxException as e:
             module.fail_json(msg='%s' % e.message)
         changed = True
 
@@ -266,4 +270,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.rax import *
 
-main()
+if __name__ == '__main__':
+    main()
